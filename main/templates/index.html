@@ -2,58 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <script id="vertex-shader" type="x-shader/x-vertex">
-        attribute vec4 vPosition;
-        attribute vec4 vColor;
-        varying vec4 fColor;
-        uniform vec3 theta;
-
-        void main(){
-            vec3 angles = radians(theta);
-            vec3 s = sin(angles);
-            vec3 c = cos(angles);
-            mat4 rx = mat4(
-                1.0, 0.0, 0.0, 0.0,
-                0.0, c.x, s.x, 0.0,
-                0.0, -s.x, c.x, 0.0,
-                0.0, 0.0, 0.0, 1.0 );
-            mat4 ry = mat4(
-                c.y, 0.0, -s.y, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                s.y, 0.0, c.y, 0.0,
-                0.0, 0.0, 0.0, 1.0 );
-            mat4 rz = mat4(
-                c.z, s.z, 0.0, 0.0,
-                -s.z, c.z, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0 );
-
-            fColor = vColor;
-            gl_Position = rz * ry * rx * vPosition;
-        }
-    </script>
-    <script id="fragment-shader" type="x-shader/x-fragment">
-        precision mediump float;
-        varying vec4 fColor;
-        void main(){
-            gl_FragColor= fColor;
-        }
-    </script>
     <script type="text/javascript" src="../Common/webgl-utils.js"></script>
     <script type="text/javascript" src="../Common/initShaders.js"></script>
     <script type="text/javascript" src="../Common/MV.js"></script>
-    <script type="text/javascript" src="rotating-cube.js"></script>
+    <script type="text/javascript" src="game.js"></script>
     <title>Hoppers!</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        /* 게임판 스타일 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 100px); /* 5개의 열 */
+            grid-template-rows: repeat(5, 100px); /* 5개의 행 */
+            gap: 10px; /* 원들 사이의 간격 */
+        }
+
+        /* 원 스타일 */
+        .circle {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db; /* 파란색 배경 */
+            border-radius: 50%; /* 원 모양 만들기 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .connection {
+            width: 100px;
+            height: 100px;
+            background-color: black; /* 파란색 배경 */
+            border-radius: 50%; /* 원 모양 만들기 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+            visibility: hidden;
+        }
+        #scoreboard {
+            font-size: 40px;
+            height: 50px;
+        }
+    </style>
 </head>
 <body>
-테스트 페이지입니다. <br>
-<canvas id="gl-canvas" width="400" height="300">
-    Oops ... your browser doesn't support the HTML5 canvas element
-</canvas>
+호퍼스 게임 <br>
 <div>
-    <button id="x-rotate">Rotate X</button>
-    <button id="y-rotate">Rotate Y</button>
-    <button id="z-rotate">Rotate Z</button>
+    <div class="grid-container">
+        <!-- 25개의 원 생성 -->
+        <div class="circle y0 x0">0</div>
+        <div class="connection"></div>
+        <div class="circle y0 x2">2</div>
+        <div class="connection"></div>
+        <div class="circle y0 x4">4</div>
+        <div class="connection"></div>
+        <div class="circle y1 x1">6</div>
+        <div class="connection"></div>
+        <div class="circle y1 x3">8</div>
+        <div class="connection"></div>
+        <div class="circle y2 x0">10</div>
+        <div class="connection"></div>
+        <div class="circle y2 x2">12</div>
+        <div class="connection"></div>
+        <div class="circle y2 x4">14</div>
+        <div class="connection"></div>
+        <div class="circle y3 x1">16</div>
+        <div class="connection"></div>
+        <div class="circle y3 x3">18</div>
+        <div class="connection"></div>
+        <div class="circle y4 x0">20</div>
+        <div class="connection"></div>
+        <div class="circle y4 x2">22</div>
+        <div class="connection"></div>
+        <div class="circle y4 x4">24</div>
+    </div>
+    <p id="level-name">Stage 1</p>
+    <p id="scoreboard"></p>
 </div>
 </body>
 </html>
