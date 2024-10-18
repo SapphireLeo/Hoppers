@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+        attribute vec4 vColor;
+        varying vec4 fColor;
+        uniform vec3 theta;
+
+        void main(){
+            vec3 angles = radians(theta);
+            vec3 s = sin(angles);
+            vec3 c = cos(angles);
+            mat4 rx = mat4(
+                1.0, 0.0, 0.0, 0.0,
+                0.0, c.x, s.x, 0.0,
+                0.0, -s.x, c.x, 0.0,
+                0.0, 0.0, 0.0, 1.0 );
+            mat4 ry = mat4(
+                c.y, 0.0, -s.y, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                s.y, 0.0, c.y, 0.0,
+                0.0, 0.0, 0.0, 1.0 );
+            mat4 rz = mat4(
+                c.z, s.z, 0.0, 0.0,
+                -s.z, c.z, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0 );
+
+            fColor = vColor;
+            gl_Position = rz * ry * rx * vPosition;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 fColor;
+        void main(){
+            gl_FragColor= fColor;
+        }
+    </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='Common/webgl-utils.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='Common/initShaders.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='Common/MV.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='rotating-cube.js') }}"></script>
+    <title>CG Practice</title>
+</head>
+<body>
+ID: 201935030  이름: 김지성 <br>
+<canvas id="gl-canvas" width="400" height="300">
+    Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<div>
+    <button id="x-rotate">Rotate X</button>
+    <button id="y-rotate">Rotate Y</button>
+    <button id="z-rotate">Rotate Z</button>
+</div>
+</body>
+</html>
