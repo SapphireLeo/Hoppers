@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <script type="text/javascript" src="../Common/webgl-utils.js"></script>
-    <script type="text/javascript" src="../Common/initShaders.js"></script>
+    <title>Hoppers Game</title>
+    <script type="text/javascript" src="../Common/three.min.js"></script>
+    <script type="text/javascript" src="../Common/GLTFLoader.js"></script>
     <script type="text/javascript" src="../Common/MV.js"></script>
     <script type="text/javascript" src="game.js"></script>
-    <title>Hoppers!</title>
     <style>
         body {
             display: flex;
@@ -15,82 +15,19 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #ffffff;
         }
 
-        /* 게임판 스타일 */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(5, 100px); /* 5개의 열 */
-            grid-template-rows: repeat(5, 100px); /* 5개의 행 */
-            gap: 10px; /* 원들 사이의 간격 */
-        }
-
-        /* 원 스타일 */
-        .circle {
-            width: 100px;
-            height: 100px;
-            background-color: #3498db; /* 파란색 배경 */
-            border-radius: 50%; /* 원 모양 만들기 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 20px;
-            font-family: Arial, sans-serif;
-        }
-        .connection {
-            width: 100px;
-            height: 100px;
-            background-color: black; /* 파란색 배경 */
-            border-radius: 50%; /* 원 모양 만들기 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 20px;
-            font-family: Arial, sans-serif;
-            visibility: hidden;
-        }
-        #scoreboard {
-            font-size: 40px;
-            height: 50px;
+        #gameCanvas {
+            width: 800px;
+            height: 600px;
+            background: #000000;
         }
     </style>
 </head>
 <body>
-호퍼스 게임 <br>
-<div>
-    <div class="grid-container">
-        <!-- 25개의 원 생성 -->
-        <div class="circle y0 x0">0</div>
-        <div class="connection"></div>
-        <div class="circle y0 x2">2</div>
-        <div class="connection"></div>
-        <div class="circle y0 x4">4</div>
-        <div class="connection"></div>
-        <div class="circle y1 x1">6</div>
-        <div class="connection"></div>
-        <div class="circle y1 x3">8</div>
-        <div class="connection"></div>
-        <div class="circle y2 x0">10</div>
-        <div class="connection"></div>
-        <div class="circle y2 x2">12</div>
-        <div class="connection"></div>
-        <div class="circle y2 x4">14</div>
-        <div class="connection"></div>
-        <div class="circle y3 x1">16</div>
-        <div class="connection"></div>
-        <div class="circle y3 x3">18</div>
-        <div class="connection"></div>
-        <div class="circle y4 x0">20</div>
-        <div class="connection"></div>
-        <div class="circle y4 x2">22</div>
-        <div class="connection"></div>
-        <div class="circle y4 x4">24</div>
-    </div>
-    <p id="level-name">Stage 1</p>
+    <h1>Hoppers</h1>
+    <canvas id="gameCanvas"></canvas>
     <p id="scoreboard"></p>
-</div>
 </body>
 </html>
