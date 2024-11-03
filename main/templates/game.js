@@ -77,7 +77,7 @@ class Board {
             }
         }
     }
-    
+
     // platform을 선택했을 경우, 선택에 따라 hop을 수행하거나 대기하는 함수
     selectPlatform(platform) {
         // 이전에 선택한 platform이 없고, 방금 선택한 platform에 개구리가 있을 경우
@@ -86,7 +86,7 @@ class Board {
                 this.selectedPlatform = platform;
                 changeSceneColor(this.selectedPlatform.frog.model, 0xff0000);
             }
-        } 
+        }
         // 선택한 platform이 있을 경우, hop를 수행하고 hop의 성공 유무와 관계없이 선택 해제
         else {
             this.hop(this.selectedPlatform, platform);
@@ -103,7 +103,7 @@ class Board {
             // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
             if (middlePlatform.frog) {
                 console.log("hop!")
-                
+
                 // 출발지의 개구리 인스턴스를 도착지로 복사
                 destination.frog = origin.frog;
                 destination.mesh.add(destination.frog.model)
@@ -119,7 +119,7 @@ class Board {
 
                 // 뛰어넘어진 플랫폼의 개구리 제거
                 middlePlatform.removeFrog()
-                
+
                 // hop의 결과 개구리가 한 개만 남았다면 승리 메세지 출력
                 if (this.checkVictory()) {
                     document.getElementById("scoreboard").textContent = "cleared!"
@@ -143,26 +143,24 @@ class Platform {
 
     createMesh() {
         const loader = new THREE.GLTFLoader();
-        loader.load(
-            './lotus_leaf/scene.gltf',
-            (gltf) => {
-                // Scene에 있는 첫 번째 자식을 가져옵니다.
-                let leaf = gltf.scene.children[0];
+        loader.load('lotus_leaf.glb', (gltf) => {
+            // 로드된 모델에서 첫 번째 자식 객체를 가져옵니다.
+            var leaf = gltf.scene.children[0];
 
-                // 스케일 조정 예시입니다. 필요에 따라 조정할 수 있습니다.
-                leaf.scale.set(1.5, 1.5, 1.5);
+            // 스케일을 조정
+            leaf.scale.set(0.3, 0.3, 0.3);
 
-                // 위치 설정: 중앙 정렬을 위해 x-2, y-1 적용
-                leaf.position.set(this.x - 2, this.y - 1, 0);
+            // 위치 설정: 중앙 정렬을 위해 x-2, y-1 적용
+            leaf.position.set((this.x - 2) * 1.3, (this.y - 1) * 1.3, 0);
 
-                // 씬에 메쉬 추가
-                scene.add(leaf);
-            },
-            undefined,
-            (error) => {
-                console.error(error);
-            }
-        );
+            // 30도 회전
+            leaf.rotation.x = Math.PI / 12;
+
+            this.mesh = leaf;
+            scene.add(this.mesh);
+        }, undefined, (error) => {
+            console.error('모델 로드 오류:', error);
+        });
     }
 
     setFrog() {
@@ -172,8 +170,8 @@ class Platform {
         loader.load('frog.glb', (gltf) => {
             this.frog.model = gltf.scene;
             this.mesh.add(this.frog.model);
-            this.frog.model.position.set(0, 0.2, 0.5); // 플랫폼 중앙에 배치
-            this.frog.model.scale.set(0.5, 0.5, 0.5);
+            this.frog.model.position.set(0, 0.2, 1.5); // 플랫폼 중앙에 배치
+            this.frog.model.scale.set(1.3, 1.3, 1.3);
             this.frog.model.rotation.x = Math.PI / 3;
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
