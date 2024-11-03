@@ -142,11 +142,27 @@ class Platform {
     }
 
     createMesh() {
-        const geometry = new THREE.CircleGeometry(0.5, 32);
-        const material = new THREE.MeshBasicMaterial({ color: 0x3498db });
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.position.set(this.x-2, this.y-1, 0); // 중앙 정렬을 위해 x-2, y-1 적용
-        scene.add(this.mesh);
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            './lotus_leaf/scene.gltf',
+            (gltf) => {
+                // Scene에 있는 첫 번째 자식을 가져옵니다.
+                let leaf = gltf.scene.children[0];
+
+                // 스케일 조정 예시입니다. 필요에 따라 조정할 수 있습니다.
+                leaf.scale.set(1.5, 1.5, 1.5);
+
+                // 위치 설정: 중앙 정렬을 위해 x-2, y-1 적용
+                leaf.position.set(this.x - 2, this.y - 1, 0);
+
+                // 씬에 메쉬 추가
+                scene.add(leaf);
+            },
+            undefined,
+            (error) => {
+                console.error(error);
+            }
+        );
     }
 
     setFrog() {
