@@ -147,13 +147,13 @@ class Platform {
             // 로드된 모델에서 첫 번째 자식 객체를 가져옵니다.
             var leaf = gltf.scene.children[0];
 
-            // 스케일을 조정
+            // 스케일 조정
             leaf.scale.set(0.3, 0.3, 0.3);
 
-            // 위치 설정: 중앙 정렬을 위해 x-2, y-1 적용
+            // 위치 설정: 중앙 정렬을 위해 x-2, y-1 적용, 추가: 간격 넓힘
             leaf.position.set((this.x - 2) * 1.3, (this.y - 1) * 1.3, 0);
 
-            // 30도 회전
+            // x축 기준 회전
             leaf.rotation.x = Math.PI / 12;
 
             this.mesh = leaf;
@@ -171,7 +171,7 @@ class Platform {
             this.frog.model = gltf.scene;
             this.mesh.add(this.frog.model);
             this.frog.model.position.set(0, 0.2, 1.5); // 플랫폼 중앙에 배치
-            this.frog.model.scale.set(1.3, 1.3, 1.3);
+            this.frog.model.scale.set(1.3, 1.3, 1.3);  // 부모로부터 크기 영향 받아서, 크기 키움
             this.frog.model.rotation.x = Math.PI / 3;
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
