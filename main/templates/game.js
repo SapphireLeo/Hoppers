@@ -1,5 +1,5 @@
-let scene;
-let camera;
+let mainBoard;
+
 let renderer;
 
 const level1_coordinates = [
@@ -24,6 +24,21 @@ function changeSceneColor(scene, color) {
 
 class Board {
     constructor(coordinates) {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
+
+        // 빛 설정
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(1, 1, 1).normalize();
+        this.scene.add(light);
+
+        const light2 = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(light2);
+
+        // 카메라 위치 설정
+        this.camera.position.set(0, -2, 6);
+        this.camera.lookAt(new THREE.Vector3(0, 0.5, 0));
         this.selectedPlatform = null;
         // coordinates should be list of vectors.
         this.platforms = [];
@@ -39,6 +54,14 @@ class Board {
         for (let coordinate of coordinates) {
             this.platforms[coordinate.y][coordinate.x].setFrog();
         }
+    }
+
+    // 애니메이션 루프
+    animate = () => {
+        requestAnimationFrame(this.animate)
+        renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.render(this.scene, this.camera);
     }
 
     checkVictory() {
@@ -62,17 +85,16 @@ class Board {
 
     // 현재 클릭한 Mesh가 개구리가 있는 발판인지를 검사하고, 만약 개구리가 있는 발판이라면 selectPlatform 메서드로 연계하는 메서드
     clickMesh(clickedMesh) {
-        let validClickFlag = false;
+        console.log("clicked Mesh:", clickedMesh)
         for (let platformRow of this.platforms) {
             for (let platform of platformRow) {
                 // 2가지 조건을 검사한다.
-                // 1. frog가 올라와 있는 platform이고 현재 선택한 오브젝트가 그 frog이거나
-                // 2. 현재 클릭한 Mesh가 그 platform의 mesh인지
-                if ((platform?.frog && platform.frog.model === clickedMesh.parent) ||
-                    (platform && platform.mesh === clickedMesh)) {
+                // 1. 현재 클릭한 Mesh가 그 platform의 mesh일 경우 또는,
+                // 2. frog가 올라와 있는 platform이고 현재 선택한 오브젝트가 그 frog일 경우
+                if ((platform && checkInclusion(clickedMesh, platform.model)) ||
+                    (platform?.frog && checkInclusion(clickedMesh, platform.frog.model))) {
                     // 만약 frog가 올라온 platform을 클릭했다면, platform 선택 메서드로 연계
                     this.selectPlatform(platform);
-                    validClickFlag = true;
                 }
             }
         }
@@ -104,15 +126,10 @@ class Board {
             if (middlePlatform.frog) {
                 console.log("hop!")
 
-                // 출발지의 개구리 인스턴스를 도착지로 복사
+                // 출발지의 개구리 인스턴스를 도착지로 이동
+                const destPlatformPosition = destination.model.position;
                 destination.frog = origin.frog;
-                destination.mesh.add(destination.frog.model)
-                destination.frog.model.position.set(0, 0.2, 0.5); // 플랫폼 중앙에 배치
-                destination.frog.model.scale.set(0.5, 0.5, 0.5);
-                destination.frog.model.rotation.x = Math.PI / 3;
-
-                // 출발지의 개구리 제거
-                origin.removeFrog();
+                destination.frog.model.position.set(destPlatformPosition.x, destPlatformPosition.y, 0.5); // 포지션을 새로운 플랫폼의 중앙으로 이동
 
                 // 현재 선택된 플랫폼을 도착지로 변경 (이후에 dismissSelection 메서드로 선택 해제됨)
                 this.selectedPlatform = destination;
@@ -144,8 +161,7 @@ class Platform {
     createMesh() {
         const loader = new THREE.GLTFLoader();
         loader.load('lotus_leaf.glb', (gltf) => {
-            // 로드된 모델에서 첫 번째 자식 객체를 가져옵니다.
-            var leaf = gltf.scene.children[0];
+            const leaf = gltf.scene;
 
             // 스케일 조정
             leaf.scale.set(0.3, 0.3, 0.3);
@@ -154,32 +170,22 @@ class Platform {
             leaf.position.set((this.x - 2) * 1.3, (this.y - 1) * 1.3, 0);
 
             // x축 기준 회전
-            leaf.rotation.x = Math.PI / 12;
+            leaf.rotation.x = Math.PI / 2;
 
-            this.mesh = leaf;
-            scene.add(this.mesh);
+            this.model = leaf;
+            this.board.scene.add(this.model);
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
         });
     }
 
     setFrog() {
-        this.frog = new Frog();
-        // 개구리 모델 로드
-        const loader = new THREE.GLTFLoader();
-        loader.load('frog.glb', (gltf) => {
-            this.frog.model = gltf.scene;
-            this.mesh.add(this.frog.model);
-            this.frog.model.position.set(0, 0.2, 1.5); // 플랫폼 중앙에 배치
-            this.frog.model.scale.set(1.3, 1.3, 1.3);  // 부모로부터 크기 영향 받아서, 크기 키움
-            this.frog.model.rotation.x = Math.PI / 3;
-        }, undefined, (error) => {
-            console.error('모델 로드 오류:', error);
-        });
+        this.frog = new Frog(this);
+
     }
 
     removeFrog() {
-        this.mesh.remove(this.frog.model);
+        this.board.scene.remove(this.frog.model);
         this.frog = null;
     }
 
@@ -189,30 +195,27 @@ class Platform {
 }
 
 class Frog {
-    constructor() {
-        this.model = null;
+    constructor(platform) {
+        this.platform = platform
+        // 개구리 모델 로드
+        const loader = new THREE.GLTFLoader();
+        loader.load('frog.glb', (gltf) => {
+            this.model = gltf.scene;
+
+            this.model.position.set((this.platform.x - 2) * 1.3, (this.platform.y - 1) * 1.3, 0.5); // 각 플랫폼 중앙에 배치
+            this.model.scale.set(0.5, 0.5, 0.5);
+            this.model.rotation.x = Math.PI / 2;
+            this.platform.board.scene.add(this.model);
+        }, undefined, (error) => {
+            console.error('모델 로드 오류:', error);
+        });
     }
 }
 
 window.onload = function init() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas') });
     renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
     renderer.setPixelRatio(window.devicePixelRatio);
-    scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
-
-    // 빛 설정
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(1, 1, 1).normalize();
-    scene.add(light);
-
-    const light2 = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(light2);
-
-    // 카메라 위치 설정
-    camera.position.set(0, -2, 6);
-    camera.lookAt(new THREE.Vector3(0, 0.5, 0));
 
     // Raycaster와 마우스 벡터 설정
     const raycaster = new THREE.Raycaster();
@@ -226,7 +229,8 @@ window.onload = function init() {
         { x: 3, y: 3 }
     ];
 
-    const mainBoard = new Board(level1_coordinates)
+
+    mainBoard = new Board(level1_coordinates)
     console.log("main board:", mainBoard);
 
     // 마우스 클릭 이벤트 리스너
@@ -238,10 +242,10 @@ window.onload = function init() {
         mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
         // Raycaster 설정
-        raycaster.setFromCamera(mouse, camera);
+        raycaster.setFromCamera(mouse, mainBoard.camera);
 
         // 클릭된 오브젝트 확인
-        const intersects = raycaster.intersectObjects(scene.children, true);
+        const intersects = raycaster.intersectObjects(mainBoard.scene.children, true);
         if (intersects.length > 0) {
             const clickedObject = intersects[0].object;
             // 클릭된 오브젝트의 색상 변경
@@ -255,12 +259,18 @@ window.onload = function init() {
         }
     });
 
-    // 애니메이션 루프
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.render(scene, camera);
+    const controls = new THREE.OrbitControls(mainBoard.camera, renderer.domElement);
+
+    mainBoard.animate()
+}
+
+function checkInclusion(mesh, scene) {
+    let object = mesh;
+    while(object) {
+        if (object === scene) {
+            return true;
+        }
+        object = object.parent;
     }
-    animate();
+    return false;
 }
