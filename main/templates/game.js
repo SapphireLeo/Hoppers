@@ -176,14 +176,61 @@ class Platform {
 
             this.model = leaf;
             this.board.scene.add(this.model);
+
+            // 첫 번째 연잎이라면 하이라이트 추가
+            if (this.x === 0 && this.y === 0) {
+                // 연잎 테두리를 빛나게 하는 함수 호출
+                this.highlightEdges(leaf);
+            }
+
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
         });
     }
 
+    // 연잎 테두리 하이라이트 함수
+    highlightEdges(object, repeat = 10) {
+        object.traverse((child) => {
+            if (child.isMesh) {
+                const edges = new THREE.EdgesGeometry(child.geometry);
+                const lineMaterial = new THREE.LineBasicMaterial({
+                    color: 0xFF0000,
+                    linewidth: 1,
+                    transparent: true,
+                    opacity: 1.0,
+                    blending: THREE.AdditiveBlending });
+
+                // 기본 edgeLines를 생성하고 위치, 스케일, 회전을 적용한 뒤, 반복문으로 복제하여 변화를 줘서 추가
+                const baseEdgeLines = new THREE.LineSegments(edges, lineMaterial);
+                baseEdgeLines.scale.copy(child.scale);
+                baseEdgeLines.position.copy(child.position);
+                baseEdgeLines.rotation.copy(child.rotation);
+
+                for (let i = 0; i < repeat; i++) {
+                    // 새로운 LineSegments를 복제
+                    const edgeLines = baseEdgeLines.clone();
+
+                    // 약간의 위치나 스케일 변화를 줘서 테두리가 겹쳐지도록 합니다.
+                    edgeLines.scale.multiplyScalar(1 + 0.01 * i);
+
+                    // 테두리를 하이라이트 대상 객체에 추가
+                    child.add(edgeLines);
+                }
+            }
+        });
+    }
+
     setFrog() {
         this.frog = new Frog(this);
+    }
 
+    addLotusFrog() {
+        if (this.lotusLoaded && this.frogLoaded) {
+            this.mesh.add(this.frog.model);
+            this.frog.model.position.set(0, 0.2, 1.5);
+            this.frog.model.scale.set(1.3, 1.3, 1.3);
+            this.frog.model.rotation.x = Math.PI / 3;
+        }
     }
 
     removeFrog() {
