@@ -160,7 +160,7 @@ class Platform {
 
     createMesh() {
         const loader = new THREE.GLTFLoader();
-        loader.load('lotus_leaf.glb', (gltf) => {
+        loader.load('../assets/lotus_leaf.glb', (gltf) => {
             const leaf = gltf.scene;
 
             // 스케일 조정
@@ -199,7 +199,7 @@ class Frog {
         this.platform = platform
         // 개구리 모델 로드
         const loader = new THREE.GLTFLoader();
-        loader.load('frog.glb', (gltf) => {
+        loader.load('../assets/frog.glb', (gltf) => {
             this.model = gltf.scene;
 
             this.model.position.set((this.platform.x - 2) * 1.3, (this.platform.y - 1) * 1.3, 0.5); // 각 플랫폼 중앙에 배치
