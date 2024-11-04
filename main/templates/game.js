@@ -94,6 +94,7 @@ class Board {
                 if ((platform && checkInclusion(clickedMesh, platform.model)) ||
                     (platform?.frog && checkInclusion(clickedMesh, platform.frog.model))) {
                     // 만약 frog가 올라온 platform을 클릭했다면, platform 선택 메서드로 연계
+                    console.log("selected platform:", platform)
                     this.selectPlatform(platform);
                 }
             }
@@ -130,6 +131,7 @@ class Board {
                 const destPlatformPosition = destination.model.position;
                 destination.frog = origin.frog;
                 destination.frog.model.position.set(destPlatformPosition.x, destPlatformPosition.y, 0.5); // 포지션을 새로운 플랫폼의 중앙으로 이동
+                origin.frog = null;
 
                 // 현재 선택된 플랫폼을 도착지로 변경 (이후에 dismissSelection 메서드로 선택 해제됨)
                 this.selectedPlatform = destination;
