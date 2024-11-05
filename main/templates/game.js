@@ -63,7 +63,7 @@ class Board {
     }
     
     createPond() {
-        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
+        const pondGeometry = new THREE.BoxGeometry(10, 10, 1); // 큐브의 크기
     
         // Vertex Shader
         const vertexShader = `
@@ -113,7 +113,7 @@ class Board {
         const pond = new THREE.Mesh(pondGeometry, pondMaterial);
         
         // 연못 위치 설정
-        pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
+        pond.position.set(0, 1.5, -0.51); // z축 방향으로 살짝 아래로 이동
         this.scene.add(pond); // 씬에 추가
     
         return pond; // 연못 메쉬 반환
