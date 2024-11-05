@@ -52,6 +52,7 @@ class Board {
         }
 
         this.pond = this.createPond();
+        this.createBoardGameEdges(); // 보드게임판 테두리 추가
 
         for (let coordinate of coordinates) {
             // 연못 큐브 생성
@@ -61,9 +62,47 @@ class Board {
         }
         this.animate(); // 애니메이션 시작
     }
+
+    createBoardGameEdges() {
+        const woodTexture = createWoodGrainTexture(); // 나무 결 텍스처 생성
+        const edgeMaterial = new THREE.MeshPhongMaterial({
+            map: woodTexture, // 나무 결 텍스처 적용
+            shininess: 5 // 광택 조정
+        });
     
+        // 앞면 테두리
+        const frontEdge = new THREE.BoxGeometry(7, 2, 0.4);
+        const frontEdgesMesh = new THREE.Mesh(frontEdge, edgeMaterial);
+        frontEdgesMesh.position.set(0, -2.41, -1); // 연못 앞쪽에 위치
+        frontEdgesMesh.rotation.x = Math.PI / 2; 
+        this.scene.add(frontEdgesMesh);
+    
+        // 뒷면 테두리
+        const backEdge = new THREE.BoxGeometry(7, 2, 0.4);
+        const backEdgesMesh = new THREE.Mesh(backEdge, edgeMaterial);
+        backEdgesMesh.position.set(0, 5, -1); // 연못 뒤쪽에 위치
+        backEdgesMesh.rotation.x = Math.PI / 2; 
+        this.scene.add(backEdgesMesh);
+    
+        // 좌측 테두리 
+        const leftEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
+        const leftEdgesMesh = new THREE.Mesh(leftEdge, edgeMaterial);
+        leftEdgesMesh.position.set(-3.7, 1.3, -1); // 연못 왼쪽에 위치
+        leftEdgesMesh.rotation.z = Math.PI / 2; 
+        this.scene.add(leftEdgesMesh);
+    
+        // 우측 테두리 
+        const rightEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
+        const rightEdgesMesh = new THREE.Mesh(rightEdge, edgeMaterial);
+        rightEdgesMesh.position.set(3.7, 1.3, -1); // 연못 오른쪽에 위치
+        rightEdgesMesh.rotation.z = Math.PI / 2; 
+        this.scene.add(rightEdgesMesh);
+    }
+    
+    
+
     createPond() {
-        const pondGeometry = new THREE.BoxGeometry(10, 10, 1); // 큐브의 크기
+        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
     
         // Vertex Shader
         const vertexShader = `
@@ -113,7 +152,7 @@ class Board {
         const pond = new THREE.Mesh(pondGeometry, pondMaterial);
         
         // 연못 위치 설정
-        pond.position.set(0, 1.5, -0.51); // z축 방향으로 살짝 아래로 이동
+        pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
         this.scene.add(pond); // 씬에 추가
     
         return pond; // 연못 메쉬 반환
@@ -402,3 +441,32 @@ function checkInclusion(mesh, scene) {
     return false;
 }
 
+function createWoodGrainTexture() {
+    const width = 256;  // 텍스처 너비
+    const height = 256; // 텍스처 높이
+    const size = width * height;
+    const data = new Uint8Array(size * 10); // RGB를 위한 배열
+
+    for (let i = 0; i < size; i++) {
+        const x = i % width;
+        const y = Math.floor(i / width);
+
+        // 가로선 나무 결 패턴
+        const grain = Math.sin(y / 15) * 10; // 가로 방향 패턴
+        const baseColor = 80; // 갈색 톤을 위한 기본 색상값
+
+        // 나무 색상 계산
+        const red = baseColor + grain + Math.random() * 50; // 빨간색
+        const green = baseColor + grain * 0.5; // 초록색
+        const blue = baseColor; // 파란색을 줄여 더 갈색으로
+
+        // 색상 값의 범위를 0-255로 제한
+        data[i * 3] = Math.min(255, Math.max(0, red));   // R
+        data[i * 3 + 1] = Math.min(255, Math.max(0, green)); // G
+        data[i * 3 + 2] = Math.min(255, Math.max(0, blue));  // B
+    }
+
+    const texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat);
+    texture.needsUpdate = true; // 텍스처 업데이트
+    return texture;
+}
