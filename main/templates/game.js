@@ -2,30 +2,11 @@ let mainBoard;
 
 let renderer;
 
-import * as THREE from 'three';
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
 const level1_coordinates = [
-    { x: 0, y: 0 },
-    { x: 2, y: 2 },
-    { x: 1, y: 3 },
-    { x: 3, y: 3 }
-];
-const level_coordinates = [
-    [
-        { x: 0, y: 0 },
-        { x: 2, y: 2 },
-        { x: 1, y: 3 },
-        { x: 3, y: 3 }
-    ],
-    [
-        { x: 3, y: 0 },
-        { x: 2, y: 1 },
-        { x: 4, y: 1 },
-        { x: 2, y: 2 }
-    ]
+    vec2(2, 0),
+    vec2(2, 2),
+    vec2(1, 3),
+    vec2(3, 3)
 ]
 
 function changeSceneColor(scene, color) {
@@ -297,7 +278,7 @@ class Platform {
     }
 
     createMesh() {
-        const loader = new GLTFLoader();
+        const loader = new THREE.GLTFLoader();
         loader.load('../assets/lotus_leaf.glb', (gltf) => {
             const leaf = gltf.scene;
 
@@ -383,7 +364,7 @@ class Frog {
     constructor(platform) {
         this.platform = platform
         // 개구리 모델 로드
-        const loader = new GLTFLoader();
+        const loader = new THREE.GLTFLoader();
         loader.load('../assets/frog.glb', (gltf) => {
             this.model = gltf.scene;
 
@@ -444,7 +425,7 @@ window.onload = function init() {
         }
     });
 
-    const controls = new OrbitControls(mainBoard.camera, renderer.domElement);
+    const controls = new THREE.OrbitControls(mainBoard.camera, renderer.domElement);
 
     mainBoard.animate()
 }
