@@ -51,16 +51,94 @@ class Board {
             this.platforms.push(newRow)
         }
 
+        this.pond = this.createPond();
+
         for (let coordinate of coordinates) {
-            this.platforms[coordinate.y][coordinate.x].setFrog();
+            // 연못 큐브 생성
+            if (this.platforms[coordinate.y][coordinate.x]) {
+                this.platforms[coordinate.y][coordinate.x].setFrog();
+            }
+        }
+        this.animate(); // 애니메이션 시작
+    }
+    
+    createPond() {
+        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
+    
+        // Vertex Shader
+        const vertexShader = `
+            precision mediump float; // 정밀도 명시
+            varying vec3 v_Position;
+            uniform float u_time;
+    
+            void main() {
+                v_Position = position; // 현재 위치 전달
+                vec3 pos = position.xyz;
+    
+                // 물결 효과를 위한 수학적 계산
+                float wave = 0.15 * (sin(5.0 * pos.x + u_time) + cos(5.0 * pos.z + u_time));
+                // pos.y += wave; // Y축으로 물결 효과 적용
+    
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+    
+        // Fragment Shader
+        const fragmentShader = `
+            precision mediump float; // 정밀도 명시
+            varying vec3 v_Position;
+            uniform float u_time;
+    
+            void main() {
+                // 물의 질감을 표현하는 색상 계산
+                float wave = 0.15 * (sin(5.0 * v_Position.x + u_time) + cos(5.0 * v_Position.z + u_time));
+                vec3 color1 = vec3(0.0, 0.2, 0.7); // 기본 색상
+                vec3 color2 = vec3(0.5, 0.7, 1.0); // 물빛 색상
+    
+                // 두 색상을 혼합하여 물결 효과를 적용
+                vec3 finalColor = mix(color1, color2, 0.5 + 0.5 * wave);
+                gl_FragColor = vec4(finalColor, 0.8); // 알파값을 포함하여 색상 출력
+            }
+        `;
+    
+        // ShaderMaterial 생성
+        const pondMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                u_time: { value: 0 } // 시간 uniform 초기화
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+        });
+    
+        const pond = new THREE.Mesh(pondGeometry, pondMaterial);
+        
+        // 연못 위치 설정
+        pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
+        this.scene.add(pond); // 씬에 추가
+    
+        return pond; // 연못 메쉬 반환
+    }
+    
+    update() {
+        // 시간에 따른 애니메이션 효과
+        if (this.pond) { // pond가 정의된 경우에만 업데이트
+            this.pond.material.uniforms.u_time.value += 0.05; // 시간을 증가시켜 물결 효과 생성
         }
     }
 
+    
     // 애니메이션 루프
     animate = () => {
-        requestAnimationFrame(this.animate)
+        requestAnimationFrame(this.animate);
+    
+        // 렌더러 크기 설정
         renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
         renderer.setPixelRatio(window.devicePixelRatio);
+    
+        // 물결 애니메이션 업데이트
+        this.update(); // Board 인스턴스에서 update 호출
+    
+        // 씬 렌더링
         renderer.render(this.scene, this.camera);
     }
 
@@ -323,3 +401,4 @@ function checkInclusion(mesh, scene) {
     }
     return false;
 }
+
