@@ -1,32 +1,12 @@
 let mainBoard;
+
 let renderer;
 
-import * as THREE from 'three';
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-// 게임 보드와 개구리 모델 설정
 const level1_coordinates = [
-    { x: 0, y: 0 },
-    { x: 2, y: 2 },
-    { x: 1, y: 3 },
-    { x: 3, y: 3 }
-];
-
-const level_coordinates = [
-    [
-        { x: 0, y: 0 },
-        { x: 2, y: 2 },
-        { x: 1, y: 3 },
-        { x: 3, y: 3 }
-    ],
-    [
-        { x: 3, y: 0 },
-        { x: 2, y: 1 },
-        { x: 4, y: 1 },
-        { x: 2, y: 2 }
-    ]
+    vec2(2, 0),
+    vec2(2, 2),
+    vec2(1, 3),
+    vec2(3, 3)
 ]
 
 function changeSceneColor(scene, color) {
@@ -42,15 +22,6 @@ function changeSceneColor(scene, color) {
     });
 }
 
-class Menu {
-    constructor() {
-        this.levels = [];
-        for (let coordinates of level_coordinates) {
-            this.levels.push(new Board(coordinates));
-        }
-    }
-}
-
 class Board {
     constructor(coordinates) {
         this.scene = new THREE.Scene();
@@ -59,10 +30,10 @@ class Board {
 
         // 빛 설정
         const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(0, 0, 3).normalize();
+        light.position.set(1, 1, 1).normalize();
         this.scene.add(light);
 
-        const light2 = new THREE.AmbientLight(0xffffff, 1);
+        const light2 = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(light2);
 
         // 카메라 위치 설정
@@ -98,41 +69,41 @@ class Board {
             map: woodTexture, // 나무 결 텍스처 적용
             shininess: 5 // 광택 조정
         });
-
+    
         // 앞면 테두리
         const frontEdge = new THREE.BoxGeometry(7, 2, 0.4);
         const frontEdgesMesh = new THREE.Mesh(frontEdge, edgeMaterial);
         frontEdgesMesh.position.set(0, -2.41, -1); // 연못 앞쪽에 위치
-        frontEdgesMesh.rotation.x = Math.PI / 2;
+        frontEdgesMesh.rotation.x = Math.PI / 2; 
         this.scene.add(frontEdgesMesh);
-
+    
         // 뒷면 테두리
         const backEdge = new THREE.BoxGeometry(7, 2, 0.4);
         const backEdgesMesh = new THREE.Mesh(backEdge, edgeMaterial);
         backEdgesMesh.position.set(0, 5, -1); // 연못 뒤쪽에 위치
-        backEdgesMesh.rotation.x = Math.PI / 2;
+        backEdgesMesh.rotation.x = Math.PI / 2; 
         this.scene.add(backEdgesMesh);
-
-        // 좌측 테두리
+    
+        // 좌측 테두리 
         const leftEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
         const leftEdgesMesh = new THREE.Mesh(leftEdge, edgeMaterial);
         leftEdgesMesh.position.set(-3.7, 1.3, -1); // 연못 왼쪽에 위치
-        leftEdgesMesh.rotation.z = Math.PI / 2;
+        leftEdgesMesh.rotation.z = Math.PI / 2; 
         this.scene.add(leftEdgesMesh);
-
-        // 우측 테두리
+    
+        // 우측 테두리 
         const rightEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
         const rightEdgesMesh = new THREE.Mesh(rightEdge, edgeMaterial);
         rightEdgesMesh.position.set(3.7, 1.3, -1); // 연못 오른쪽에 위치
-        rightEdgesMesh.rotation.z = Math.PI / 2;
+        rightEdgesMesh.rotation.z = Math.PI / 2; 
         this.scene.add(rightEdgesMesh);
     }
-
-
+    
+    
 
     createPond() {
         const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
-
+    
         // Vertex Shader
         const vertexShader = `
             precision mediump float; // 정밀도 명시
@@ -150,7 +121,7 @@ class Board {
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
             }
         `;
-
+    
         // Fragment Shader
         const fragmentShader = `
             precision mediump float; // 정밀도 명시
@@ -168,7 +139,7 @@ class Board {
                 gl_FragColor = vec4(finalColor, 0.8); // 알파값을 포함하여 색상 출력
             }
         `;
-
+    
         // ShaderMaterial 생성
         const pondMaterial = new THREE.ShaderMaterial({
             uniforms: {
@@ -177,16 +148,16 @@ class Board {
             vertexShader: vertexShader,
             fragmentShader: fragmentShader,
         });
-
+    
         const pond = new THREE.Mesh(pondGeometry, pondMaterial);
-
+        
         // 연못 위치 설정
         pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
         this.scene.add(pond); // 씬에 추가
-
+    
         return pond; // 연못 메쉬 반환
     }
-
+    
     update() {
         // 시간에 따른 애니메이션 효과
         if (this.pond) { // pond가 정의된 경우에만 업데이트
@@ -194,36 +165,18 @@ class Board {
         }
     }
 
-
+    
     // 애니메이션 루프
     animate = () => {
-        requestAnimationFrame(this.animate)
-
-        // // CSS2DRenderer 설정
-        // const labelRenderer = new CSS2DRenderer();
-        // labelRenderer.setSize(200, 200);
-        // labelRenderer.domElement.style.position = 'absolute';
-        // labelRenderer.domElement.style.backgroundColor = 'red';
-        // labelRenderer.domElement.style.top = '0px';
-        // document.body.appendChild(labelRenderer.domElement);
-        //
-        // // 메뉴 UI HTML 요소 추가
-        // const menuDiv = document.createElement('div');
-        // menuDiv.className = 'menu';
-        // menuDiv.textContent = 'Game Menu';
-        //
-        // // HTML 요소를 CSS2DObject로 Three.js 장면에 추가
-        // const menuLabel = new CSS2DObject(menuDiv);
-        // // console.log(menuLabel)
-        // this.scene.add(menuLabel);
-
+        requestAnimationFrame(this.animate);
+    
         // 렌더러 크기 설정
         renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
         renderer.setPixelRatio(window.devicePixelRatio);
-
+    
         // 물결 애니메이션 업데이트
         this.update(); // Board 인스턴스에서 update 호출
-
+    
         // 씬 렌더링
         renderer.render(this.scene, this.camera);
     }
@@ -325,7 +278,7 @@ class Platform {
     }
 
     createMesh() {
-        const loader = new GLTFLoader();
+        const loader = new THREE.GLTFLoader();
         loader.load('../assets/lotus_leaf.glb', (gltf) => {
             const leaf = gltf.scene;
 
@@ -411,7 +364,7 @@ class Frog {
     constructor(platform) {
         this.platform = platform
         // 개구리 모델 로드
-        const loader = new GLTFLoader();
+        const loader = new THREE.GLTFLoader();
         loader.load('../assets/frog.glb', (gltf) => {
             this.model = gltf.scene;
 
@@ -430,16 +383,17 @@ window.onload = function init() {
     renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    // renderer.toneMapping = THREE.NoToneMapping; // 또는 THREE.LinearToneMapping
-    // renderer.toneMappingExposure = 1; // 기본 노출 설정
-
-
     // Raycaster와 마우스 벡터 설정
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-
+    // 게임 보드와 개구리 모델 설정
+    const level1_coordinates = [
+        { x: 0, y: 0 },
+        { x: 2, y: 2 },
+        { x: 1, y: 3 },
+        { x: 3, y: 3 }
+    ];
 
 
     mainBoard = new Board(level1_coordinates)
@@ -471,7 +425,7 @@ window.onload = function init() {
         }
     });
 
-    const controls = new OrbitControls(mainBoard.camera, renderer.domElement);
+    const controls = new THREE.OrbitControls(mainBoard.camera, renderer.domElement);
 
     mainBoard.animate()
 }
