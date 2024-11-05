@@ -71,30 +71,30 @@ class Board {
         });
     
         // 앞면 테두리
-        const frontEdge = new THREE.BoxGeometry(8, 2, 0.4);
+        const frontEdge = new THREE.BoxGeometry(7, 2, 0.4);
         const frontEdgesMesh = new THREE.Mesh(frontEdge, edgeMaterial);
-        frontEdgesMesh.position.set(0, -2.9, -1); // 연못 앞쪽에 위치
+        frontEdgesMesh.position.set(0, -2.41, -1); // 연못 앞쪽에 위치
         frontEdgesMesh.rotation.x = Math.PI / 2; 
         this.scene.add(frontEdgesMesh);
     
         // 뒷면 테두리
-        const backEdge = new THREE.BoxGeometry(8, 2, 0.4);
+        const backEdge = new THREE.BoxGeometry(7, 2, 0.4);
         const backEdgesMesh = new THREE.Mesh(backEdge, edgeMaterial);
-        backEdgesMesh.position.set(0, 5.3, -1); // 연못 뒤쪽에 위치
+        backEdgesMesh.position.set(0, 5, -1); // 연못 뒤쪽에 위치
         backEdgesMesh.rotation.x = Math.PI / 2; 
         this.scene.add(backEdgesMesh);
     
         // 좌측 테두리 
-        const leftEdge = new THREE.BoxGeometry(8.6, 0.4, 2);
+        const leftEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
         const leftEdgesMesh = new THREE.Mesh(leftEdge, edgeMaterial);
-        leftEdgesMesh.position.set(-4.2, 1.2, -1); // 연못 왼쪽에 위치
+        leftEdgesMesh.position.set(-3.7, 1.3, -1); // 연못 왼쪽에 위치
         leftEdgesMesh.rotation.z = Math.PI / 2; 
         this.scene.add(leftEdgesMesh);
     
         // 우측 테두리 
-        const rightEdge = new THREE.BoxGeometry(8.6, 0.4, 2);
+        const rightEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
         const rightEdgesMesh = new THREE.Mesh(rightEdge, edgeMaterial);
-        rightEdgesMesh.position.set(4.2, 1.2, -1); // 연못 오른쪽에 위치
+        rightEdgesMesh.position.set(3.7, 1.3, -1); // 연못 오른쪽에 위치
         rightEdgesMesh.rotation.z = Math.PI / 2; 
         this.scene.add(rightEdgesMesh);
     }
@@ -102,7 +102,7 @@ class Board {
     
 
     createPond() {
-        const pondGeometry = new THREE.BoxGeometry(8, 8, 1); // 큐브의 크기
+        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
     
         // Vertex Shader
         const vertexShader = `
