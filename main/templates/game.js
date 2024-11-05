@@ -80,10 +80,120 @@ class Board {
             this.platforms.push(newRow)
         }
 
+        this.pond = this.createPond();
+        this.createBoardGameEdges(); // 보드게임판 테두리 추가
+
         for (let coordinate of coordinates) {
-            this.platforms[coordinate.y][coordinate.x].setFrog();
+            // 연못 큐브 생성
+            if (this.platforms[coordinate.y][coordinate.x]) {
+                this.platforms[coordinate.y][coordinate.x].setFrog();
+            }
+        }
+        this.animate(); // 애니메이션 시작
+    }
+
+    createBoardGameEdges() {
+        const woodTexture = createWoodGrainTexture(); // 나무 결 텍스처 생성
+        const edgeMaterial = new THREE.MeshPhongMaterial({
+            map: woodTexture, // 나무 결 텍스처 적용
+            shininess: 5 // 광택 조정
+        });
+
+        // 앞면 테두리
+        const frontEdge = new THREE.BoxGeometry(7, 2, 0.4);
+        const frontEdgesMesh = new THREE.Mesh(frontEdge, edgeMaterial);
+        frontEdgesMesh.position.set(0, -2.41, -1); // 연못 앞쪽에 위치
+        frontEdgesMesh.rotation.x = Math.PI / 2;
+        this.scene.add(frontEdgesMesh);
+
+        // 뒷면 테두리
+        const backEdge = new THREE.BoxGeometry(7, 2, 0.4);
+        const backEdgesMesh = new THREE.Mesh(backEdge, edgeMaterial);
+        backEdgesMesh.position.set(0, 5, -1); // 연못 뒤쪽에 위치
+        backEdgesMesh.rotation.x = Math.PI / 2;
+        this.scene.add(backEdgesMesh);
+
+        // 좌측 테두리
+        const leftEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
+        const leftEdgesMesh = new THREE.Mesh(leftEdge, edgeMaterial);
+        leftEdgesMesh.position.set(-3.7, 1.3, -1); // 연못 왼쪽에 위치
+        leftEdgesMesh.rotation.z = Math.PI / 2;
+        this.scene.add(leftEdgesMesh);
+
+        // 우측 테두리
+        const rightEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
+        const rightEdgesMesh = new THREE.Mesh(rightEdge, edgeMaterial);
+        rightEdgesMesh.position.set(3.7, 1.3, -1); // 연못 오른쪽에 위치
+        rightEdgesMesh.rotation.z = Math.PI / 2;
+        this.scene.add(rightEdgesMesh);
+    }
+
+
+
+    createPond() {
+        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
+
+        // Vertex Shader
+        const vertexShader = `
+            precision mediump float; // 정밀도 명시
+            varying vec3 v_Position;
+            uniform float u_time;
+    
+            void main() {
+                v_Position = position; // 현재 위치 전달
+                vec3 pos = position.xyz;
+    
+                // 물결 효과를 위한 수학적 계산
+                float wave = 0.15 * (sin(5.0 * pos.x + u_time) + cos(5.0 * pos.z + u_time));
+                // pos.y += wave; // Y축으로 물결 효과 적용
+    
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        // Fragment Shader
+        const fragmentShader = `
+            precision mediump float; // 정밀도 명시
+            varying vec3 v_Position;
+            uniform float u_time;
+    
+            void main() {
+                // 물의 질감을 표현하는 색상 계산
+                float wave = 0.15 * (sin(5.0 * v_Position.x + u_time) + cos(5.0 * v_Position.z + u_time));
+                vec3 color1 = vec3(0.0, 0.2, 0.7); // 기본 색상
+                vec3 color2 = vec3(0.5, 0.7, 1.0); // 물빛 색상
+    
+                // 두 색상을 혼합하여 물결 효과를 적용
+                vec3 finalColor = mix(color1, color2, 0.5 + 0.5 * wave);
+                gl_FragColor = vec4(finalColor, 0.8); // 알파값을 포함하여 색상 출력
+            }
+        `;
+
+        // ShaderMaterial 생성
+        const pondMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                u_time: { value: 0 } // 시간 uniform 초기화
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+        });
+
+        const pond = new THREE.Mesh(pondGeometry, pondMaterial);
+
+        // 연못 위치 설정
+        pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
+        this.scene.add(pond); // 씬에 추가
+
+        return pond; // 연못 메쉬 반환
+    }
+
+    update() {
+        // 시간에 따른 애니메이션 효과
+        if (this.pond) { // pond가 정의된 경우에만 업데이트
+            this.pond.material.uniforms.u_time.value += 0.05; // 시간을 증가시켜 물결 효과 생성
         }
     }
+
 
     // 애니메이션 루프
     animate = () => {
@@ -107,8 +217,14 @@ class Board {
         // // console.log(menuLabel)
         // this.scene.add(menuLabel);
 
+        // 렌더러 크기 설정
         renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
         renderer.setPixelRatio(window.devicePixelRatio);
+
+        // 물결 애니메이션 업데이트
+        this.update(); // Board 인스턴스에서 update 호출
+
+        // 씬 렌더링
         renderer.render(this.scene, this.camera);
     }
 
@@ -224,14 +340,61 @@ class Platform {
 
             this.model = leaf;
             this.board.scene.add(this.model);
+
+            // 첫 번째 연잎이라면 하이라이트 추가
+            if (this.x === 0 && this.y === 0) {
+                // 연잎 테두리를 빛나게 하는 함수 호출
+                this.highlightEdges(leaf);
+            }
+
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
         });
     }
 
+    // 연잎 테두리 하이라이트 함수
+    highlightEdges(object, repeat = 10) {
+        object.traverse((child) => {
+            if (child.isMesh) {
+                const edges = new THREE.EdgesGeometry(child.geometry);
+                const lineMaterial = new THREE.LineBasicMaterial({
+                    color: 0xFF0000,
+                    linewidth: 1,
+                    transparent: true,
+                    opacity: 1.0,
+                    blending: THREE.AdditiveBlending });
+
+                // 기본 edgeLines를 생성하고 위치, 스케일, 회전을 적용한 뒤, 반복문으로 복제하여 변화를 줘서 추가
+                const baseEdgeLines = new THREE.LineSegments(edges, lineMaterial);
+                baseEdgeLines.scale.copy(child.scale);
+                baseEdgeLines.position.copy(child.position);
+                baseEdgeLines.rotation.copy(child.rotation);
+
+                for (let i = 0; i < repeat; i++) {
+                    // 새로운 LineSegments를 복제
+                    const edgeLines = baseEdgeLines.clone();
+
+                    // 약간의 위치나 스케일 변화를 줘서 테두리가 겹쳐지도록 합니다.
+                    edgeLines.scale.multiplyScalar(1 + 0.01 * i);
+
+                    // 테두리를 하이라이트 대상 객체에 추가
+                    child.add(edgeLines);
+                }
+            }
+        });
+    }
+
     setFrog() {
         this.frog = new Frog(this);
+    }
 
+    addLotusFrog() {
+        if (this.lotusLoaded && this.frogLoaded) {
+            this.mesh.add(this.frog.model);
+            this.frog.model.position.set(0, 0.2, 1.5);
+            this.frog.model.scale.set(1.3, 1.3, 1.3);
+            this.frog.model.rotation.x = Math.PI / 3;
+        }
     }
 
     removeFrog() {
@@ -322,4 +485,34 @@ function checkInclusion(mesh, scene) {
         object = object.parent;
     }
     return false;
+}
+
+function createWoodGrainTexture() {
+    const width = 256;  // 텍스처 너비
+    const height = 256; // 텍스처 높이
+    const size = width * height;
+    const data = new Uint8Array(size * 10); // RGB를 위한 배열
+
+    for (let i = 0; i < size; i++) {
+        const x = i % width;
+        const y = Math.floor(i / width);
+
+        // 가로선 나무 결 패턴
+        const grain = Math.sin(y / 15) * 10; // 가로 방향 패턴
+        const baseColor = 80; // 갈색 톤을 위한 기본 색상값
+
+        // 나무 색상 계산
+        const red = baseColor + grain + Math.random() * 50; // 빨간색
+        const green = baseColor + grain * 0.5; // 초록색
+        const blue = baseColor; // 파란색을 줄여 더 갈색으로
+
+        // 색상 값의 범위를 0-255로 제한
+        data[i * 3] = Math.min(255, Math.max(0, red));   // R
+        data[i * 3 + 1] = Math.min(255, Math.max(0, green)); // G
+        data[i * 3 + 2] = Math.min(255, Math.max(0, blue));  // B
+    }
+
+    const texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat);
+    texture.needsUpdate = true; // 텍스처 업데이트
+    return texture;
 }
