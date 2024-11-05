@@ -1,3 +1,5 @@
+import {RGBAFormat} from "three";
+
 let mainBoard;
 
 let renderer;
@@ -52,7 +54,7 @@ class Board {
         light.position.set(1, 1, 1).normalize();
         this.scene.add(light);
 
-        const light2 = new THREE.AmbientLight(0xffffff, 0.5);
+        const light2 = new THREE.AmbientLight(0xffffff, 1);
         this.scene.add(light2);
 
         // 카메라 위치 설정
@@ -83,39 +85,45 @@ class Board {
     }
 
     createBoardGameEdges() {
-        const woodTexture = createWoodGrainTexture(); // 나무 결 텍스처 생성
-        const edgeMaterial = new THREE.MeshPhongMaterial({
-            map: woodTexture, // 나무 결 텍스처 적용
-            shininess: 5 // 광택 조정
+        const textureLoader = new THREE.TextureLoader();
+
+        // example.jpg 파일을 텍스처로 로드
+        textureLoader.load('../assets/wooden-texture.jpg', (texture) => {
+            // 텍스처를 사용할 재질 생성
+            const woodMaterial = new THREE.MeshPhongMaterial({
+                map: texture,
+                shininess: 5,
+            });
+
+            // 앞면 테두리
+            const frontEdge = new THREE.BoxGeometry(7, 2, 0.4);
+            const frontEdgesMesh = new THREE.Mesh(frontEdge, woodMaterial);
+            frontEdgesMesh.position.set(0, -2.41, -1); // 연못 앞쪽에 위치
+            frontEdgesMesh.rotation.x = Math.PI / 2;
+            this.scene.add(frontEdgesMesh);
+
+            // 뒷면 테두리
+            const backEdge = new THREE.BoxGeometry(7, 2, 0.4);
+            const backEdgesMesh = new THREE.Mesh(backEdge, woodMaterial);
+            backEdgesMesh.position.set(0, 5, -1); // 연못 뒤쪽에 위치
+            backEdgesMesh.rotation.x = Math.PI / 2;
+            this.scene.add(backEdgesMesh);
+
+            // 좌측 테두리
+            const leftEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
+            const leftEdgesMesh = new THREE.Mesh(leftEdge, woodMaterial);
+            leftEdgesMesh.position.set(-3.7, 1.3, -1); // 연못 왼쪽에 위치
+            leftEdgesMesh.rotation.z = Math.PI / 2;
+            this.scene.add(leftEdgesMesh);
+
+            // 우측 테두리
+            const rightEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
+            const rightEdgesMesh = new THREE.Mesh(rightEdge, woodMaterial);
+            rightEdgesMesh.position.set(3.7, 1.3, -1); // 연못 오른쪽에 위치
+            rightEdgesMesh.rotation.z = Math.PI / 2;
+            this.scene.add(rightEdgesMesh);
         });
-    
-        // 앞면 테두리
-        const frontEdge = new THREE.BoxGeometry(7, 2, 0.4);
-        const frontEdgesMesh = new THREE.Mesh(frontEdge, edgeMaterial);
-        frontEdgesMesh.position.set(0, -2.41, -1); // 연못 앞쪽에 위치
-        frontEdgesMesh.rotation.x = Math.PI / 2; 
-        this.scene.add(frontEdgesMesh);
-    
-        // 뒷면 테두리
-        const backEdge = new THREE.BoxGeometry(7, 2, 0.4);
-        const backEdgesMesh = new THREE.Mesh(backEdge, edgeMaterial);
-        backEdgesMesh.position.set(0, 5, -1); // 연못 뒤쪽에 위치
-        backEdgesMesh.rotation.x = Math.PI / 2; 
-        this.scene.add(backEdgesMesh);
-    
-        // 좌측 테두리 
-        const leftEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
-        const leftEdgesMesh = new THREE.Mesh(leftEdge, edgeMaterial);
-        leftEdgesMesh.position.set(-3.7, 1.3, -1); // 연못 왼쪽에 위치
-        leftEdgesMesh.rotation.z = Math.PI / 2; 
-        this.scene.add(leftEdgesMesh);
-    
-        // 우측 테두리 
-        const rightEdge = new THREE.BoxGeometry(7.8, 0.4, 2);
-        const rightEdgesMesh = new THREE.Mesh(rightEdge, edgeMaterial);
-        rightEdgesMesh.position.set(3.7, 1.3, -1); // 연못 오른쪽에 위치
-        rightEdgesMesh.rotation.z = Math.PI / 2; 
-        this.scene.add(rightEdgesMesh);
+
     }
     
     
@@ -485,7 +493,7 @@ function createWoodGrainTexture() {
         data[i * 3 + 2] = Math.min(255, Math.max(0, blue));  // B
     }
 
-    const texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat);
+    const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
     texture.needsUpdate = true; // 텍스처 업데이트
     return texture;
 }
