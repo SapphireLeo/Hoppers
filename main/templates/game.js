@@ -337,7 +337,7 @@ class Platform {
             if (child.isMesh) {
                 const edges = new THREE.EdgesGeometry(child.geometry);
                 const lineMaterial = new THREE.LineBasicMaterial({
-                    color: 0xFF0000,
+                    color: 0xFFFF00,
                     linewidth: 1,
                     transparent: true,
                     opacity: 1.0,
@@ -361,6 +361,22 @@ class Platform {
                 }
             }
         });
+        // 스포트라이트 생성
+        const spotlight = new THREE.SpotLight(0xffff00, 5);
+        spotlight.angle = Math.PI / 10; // 빛 확산 각도 설정
+        spotlight.penumbra = 1.0; // 부드러운 가장자리 설정
+        spotlight.decay = 1; // 빛 감쇠율 설정
+        spotlight.distance = 10; // 빛이 비치는 거리 설정
+
+        // 스포트라이트 위치 설정 (연잎 위에 위치시킴)
+        spotlight.position.set(object.position.x, object.position.y, object.position.z+3);
+
+        // 스포트라이트가 연잎을 바라보도록 타겟 설정
+        spotlight.target = object;
+
+        // 스포트라이트와 타겟을 장면에 추가
+        this.board.scene.add(spotlight);
+        this.board.scene.add(spotlight.target);
     }
 
     setFrog() {
