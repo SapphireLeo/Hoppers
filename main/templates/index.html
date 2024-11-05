@@ -3,11 +3,19 @@
 <head>
     <meta charset="utf-8">
     <title>Hoppers Game</title>
-    <script type="text/javascript" src="../Common/three.min.js"></script>
-    <script type="text/javascript" src="../Common/GLTFLoader.js"></script>
-    <script type="text/javascript" src="../Common/MV.js"></script>
-    <script type="text/javascript" src="../Common/orbitcontrols.js"></script>
-    <script type="text/javascript" src="game.js"></script>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+          }
+        }
+    </script>
+    <script type="module" src="../Common/MV.js"></script>
+<!--    <script type="module" src="../Common/three.js"></script>-->
+<!--    <script type="module" src="../Common/GLTFLoader.js"></script>-->
+<!--    <script type="module" src="../Common/orbitcontrols.js"></script>-->
+    <script type="module" src="./game.js"></script>
     <style>
         body {
             display: flex;
@@ -29,6 +37,7 @@
 <body>
     <h1>Hoppers</h1>
     <canvas id="gameCanvas"></canvas>
+
     <p id="scoreboard"></p>
 </body>
 </html>

@@ -1,12 +1,32 @@
 let mainBoard;
-
 let renderer;
 
+import * as THREE from 'three';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// 게임 보드와 개구리 모델 설정
 const level1_coordinates = [
-    vec2(2, 0),
-    vec2(2, 2),
-    vec2(1, 3),
-    vec2(3, 3)
+    { x: 0, y: 0 },
+    { x: 2, y: 2 },
+    { x: 1, y: 3 },
+    { x: 3, y: 3 }
+];
+
+const level_coordinates = [
+    [
+        { x: 0, y: 0 },
+        { x: 2, y: 2 },
+        { x: 1, y: 3 },
+        { x: 3, y: 3 }
+    ],
+    [
+        { x: 3, y: 0 },
+        { x: 2, y: 1 },
+        { x: 4, y: 1 },
+        { x: 2, y: 2 }
+    ]
 ]
 
 function changeSceneColor(scene, color) {
@@ -22,6 +42,15 @@ function changeSceneColor(scene, color) {
     });
 }
 
+class Menu {
+    constructor() {
+        this.levels = [];
+        for (let coordinates of level_coordinates) {
+            this.levels.push(new Board(coordinates));
+        }
+    }
+}
+
 class Board {
     constructor(coordinates) {
         this.scene = new THREE.Scene();
@@ -30,10 +59,10 @@ class Board {
 
         // 빛 설정
         const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(1, 1, 1).normalize();
+        light.position.set(0, 0, 3).normalize();
         this.scene.add(light);
 
-        const light2 = new THREE.AmbientLight(0xffffff, 0.5);
+        const light2 = new THREE.AmbientLight(0xffffff, 1);
         this.scene.add(light2);
 
         // 카메라 위치 설정
@@ -59,6 +88,25 @@ class Board {
     // 애니메이션 루프
     animate = () => {
         requestAnimationFrame(this.animate)
+
+        // // CSS2DRenderer 설정
+        // const labelRenderer = new CSS2DRenderer();
+        // labelRenderer.setSize(200, 200);
+        // labelRenderer.domElement.style.position = 'absolute';
+        // labelRenderer.domElement.style.backgroundColor = 'red';
+        // labelRenderer.domElement.style.top = '0px';
+        // document.body.appendChild(labelRenderer.domElement);
+        //
+        // // 메뉴 UI HTML 요소 추가
+        // const menuDiv = document.createElement('div');
+        // menuDiv.className = 'menu';
+        // menuDiv.textContent = 'Game Menu';
+        //
+        // // HTML 요소를 CSS2DObject로 Three.js 장면에 추가
+        // const menuLabel = new CSS2DObject(menuDiv);
+        // // console.log(menuLabel)
+        // this.scene.add(menuLabel);
+
         renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.render(this.scene, this.camera);
@@ -161,7 +209,7 @@ class Platform {
     }
 
     createMesh() {
-        const loader = new THREE.GLTFLoader();
+        const loader = new GLTFLoader();
         loader.load('../assets/lotus_leaf.glb', (gltf) => {
             const leaf = gltf.scene;
 
@@ -200,7 +248,7 @@ class Frog {
     constructor(platform) {
         this.platform = platform
         // 개구리 모델 로드
-        const loader = new THREE.GLTFLoader();
+        const loader = new GLTFLoader();
         loader.load('../assets/frog.glb', (gltf) => {
             this.model = gltf.scene;
 
@@ -219,17 +267,16 @@ window.onload = function init() {
     renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
     renderer.setPixelRatio(window.devicePixelRatio);
 
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // renderer.toneMapping = THREE.NoToneMapping; // 또는 THREE.LinearToneMapping
+    // renderer.toneMappingExposure = 1; // 기본 노출 설정
+
+
     // Raycaster와 마우스 벡터 설정
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    // 게임 보드와 개구리 모델 설정
-    const level1_coordinates = [
-        { x: 0, y: 0 },
-        { x: 2, y: 2 },
-        { x: 1, y: 3 },
-        { x: 3, y: 3 }
-    ];
+
 
 
     mainBoard = new Board(level1_coordinates)
@@ -261,7 +308,7 @@ window.onload = function init() {
         }
     });
 
-    const controls = new THREE.OrbitControls(mainBoard.camera, renderer.domElement);
+    const controls = new OrbitControls(mainBoard.camera, renderer.domElement);
 
     mainBoard.animate()
 }
