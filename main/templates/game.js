@@ -362,7 +362,7 @@ class Platform {
             }
         });
         // 스포트라이트 생성
-        const spotlight = new THREE.SpotLight(0xffff00, 5);
+        const spotlight = new THREE.SpotLight(0xffff00, 15);
         spotlight.angle = Math.PI / 10; // 빛 확산 각도 설정
         spotlight.penumbra = 1.0; // 부드러운 가장자리 설정
         spotlight.decay = 1; // 빛 감쇠율 설정
@@ -380,7 +380,15 @@ class Platform {
     }
 
     setFrog() {
-        this.frog = new Frog(this);
+        if (this.x === 2 && this.y === 2) {
+            this.frog = new StoneFrog(this);
+        }
+        else if (this.x === 1 && this.y === 3){
+            this.frog = new blueFrog(this);
+        }
+        else {
+            this.frog = new Frog(this);
+        }
     }
 
     addLotusFrog() {
@@ -404,7 +412,8 @@ class Platform {
 
 class Frog {
     constructor(platform) {
-        this.platform = platform
+        this.platform = platform;
+        this.model = null; // 모델이 아직 로드되지 않음을 나타냄
         // 개구리 모델 로드
         const loader = new GLTFLoader();
         loader.load('../assets/frog.glb', (gltf) => {
@@ -414,8 +423,55 @@ class Frog {
             this.model.scale.set(0.5, 0.5, 0.5);
             this.model.rotation.x = Math.PI / 2;
             this.platform.board.scene.add(this.model);
+
+            // StoneFrog인지 체크하고 돌 같은 질감 적용
+            if (this instanceof StoneFrog) {
+                this.applyStoneTexture();
+            }
+
+            if (this instanceof blueFrog) {
+                this.applyBlueTexture();
+            }
+
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
+        });
+    }
+}
+
+class StoneFrog extends Frog {
+    constructor(platform) {
+        super(platform);
+    }
+
+    applyStoneTexture() {
+        const textureLoader = new THREE.TextureLoader();
+        const stoneTexture = textureLoader.load('../assets/stone_texture.jpg');  // stone_texture 이미지 경로
+
+        this.model.traverse((child) => {
+            if (child.isMesh) {
+                child.material = new THREE.MeshStandardMaterial({
+                    map: stoneTexture, // stone_texture 이미지를 사용
+                    roughness: 0.9,  // 거칠기
+                    metalness: 0.2,  // 금속성
+                });
+            }
+        });
+    }
+}
+
+class blueFrog extends Frog {
+    constructor(platform) {
+        super(platform);
+    }
+
+    applyBlueTexture() {
+        this.model.traverse((child) => {
+            if (child.isMesh) {
+                child.material = new THREE.MeshStandardMaterial({
+                    color: 0x87CEFA
+                });
+            }
         });
     }
 }
