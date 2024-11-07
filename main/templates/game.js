@@ -14,7 +14,7 @@ const level1_coordinates = [
     { x: 1, y: 3 },
     { x: 3, y: 3 }
 ];
-const level_coordinates = [
+const all_level_coordinates = [
     [
         { x: 0, y: 0 },
         { x: 2, y: 2 },
@@ -42,11 +42,19 @@ function changeSceneColor(scene, color) {
     });
 }
 
-class Board {
-    constructor(coordinates) {
+class Game {
+    constructor() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.currentLevel = null;
+        this.levels = [];
+
+        this.pond = this.createPond();
+
+        for (let coordinate of all_level_coordinates) {
+            this.levels.push(new Board(this, coordinate));
+        }
 
         // 빛 설정
         const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -59,28 +67,85 @@ class Board {
         // 카메라 위치 설정
         this.camera.position.set(0, -2, 6);
         this.camera.lookAt(new THREE.Vector3(0, 0.5, 0));
-        this.selectedPlatform = null;
-        // coordinates should be list of vectors.
-        this.platforms = [];
-        for (let i = 0; i < 5; i++) {
-            const newRow = []
-            for (let j = 0; j < 5; j++) {
-                const platform = (j + i) % 2 ? null : new Platform(j, i, this);
-                newRow.push(platform);
-            }
-            this.platforms.push(newRow)
-        }
 
-        this.pond = this.createPond();
         this.createBoardGameEdges(); // 보드게임판 테두리 추가
 
-        for (let coordinate of coordinates) {
-            // 연못 큐브 생성
-            if (this.platforms[coordinate.y][coordinate.x]) {
-                this.platforms[coordinate.y][coordinate.x].setFrog();
-            }
-        }
+        const controls = new OrbitControls(this.camera, renderer.domElement);
+
         this.animate(); // 애니메이션 시작
+    }
+
+    start() {
+        this.currentLevel = this.levels[0];
+        this.beginLevel();
+    }
+
+    beginLevel() {
+        this.currentLevel.start();
+    }
+
+    createPond() {
+        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
+
+        // Vertex Shader
+        const vertexShader = `
+            precision mediump float; // 정밀도 명시
+            varying vec3 v_Position;
+            uniform float u_time;
+    
+            void main() {
+                v_Position = position; // 현재 위치 전달
+                vec3 pos = position.xyz;
+    
+                // 물결 효과를 위한 수학적 계산
+                float wave = 0.15 * (sin(5.0 * pos.x + u_time) + cos(5.0 * pos.z + u_time));
+                // pos.y += wave; // Y축으로 물결 효과 적용
+    
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        // Fragment Shader
+        const fragmentShader = `
+            precision mediump float; // 정밀도 명시
+            varying vec3 v_Position;
+            uniform float u_time;
+    
+            void main() {
+                // 물의 질감을 표현하는 색상 계산
+                float wave = 0.15 * (sin(5.0 * v_Position.x + u_time) + cos(5.0 * v_Position.z + u_time));
+                vec3 color1 = vec3(0.0, 0.2, 0.7); // 기본 색상
+                vec3 color2 = vec3(0.5, 0.7, 1.0); // 물빛 색상
+    
+                // 두 색상을 혼합하여 물결 효과를 적용
+                vec3 finalColor = mix(color1, color2, 0.5 + 0.5 * wave);
+                gl_FragColor = vec4(finalColor, 0.8); // 알파값을 포함하여 색상 출력
+            }
+        `;
+
+        // ShaderMaterial 생성
+        const pondMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                u_time: { value: 0 } // 시간 uniform 초기화
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+        });
+
+        const pond = new THREE.Mesh(pondGeometry, pondMaterial);
+
+        // 연못 위치 설정
+        pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
+        this.scene.add(pond); // 씬에 추가
+
+        return pond; // 연못 메쉬 반환
+    }
+
+    update() {
+        // 시간에 따른 애니메이션 효과
+        if (this.pond) { // pond가 정의된 경우에만 업데이트
+            this.pond.material.uniforms.u_time.value += 0.05; // 시간을 증가시켜 물결 효과 생성
+        }
     }
 
     createBoardGameEdges() {
@@ -124,87 +189,76 @@ class Board {
         });
 
     }
-    
-    
 
-    createPond() {
-        const pondGeometry = new THREE.BoxGeometry(7, 7, 1); // 큐브의 크기
-    
-        // Vertex Shader
-        const vertexShader = `
-            precision mediump float; // 정밀도 명시
-            varying vec3 v_Position;
-            uniform float u_time;
-    
-            void main() {
-                v_Position = position; // 현재 위치 전달
-                vec3 pos = position.xyz;
-    
-                // 물결 효과를 위한 수학적 계산
-                float wave = 0.15 * (sin(5.0 * pos.x + u_time) + cos(5.0 * pos.z + u_time));
-                // pos.y += wave; // Y축으로 물결 효과 적용
-    
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            }
-        `;
-    
-        // Fragment Shader
-        const fragmentShader = `
-            precision mediump float; // 정밀도 명시
-            varying vec3 v_Position;
-            uniform float u_time;
-    
-            void main() {
-                // 물의 질감을 표현하는 색상 계산
-                float wave = 0.15 * (sin(5.0 * v_Position.x + u_time) + cos(5.0 * v_Position.z + u_time));
-                vec3 color1 = vec3(0.0, 0.2, 0.7); // 기본 색상
-                vec3 color2 = vec3(0.5, 0.7, 1.0); // 물빛 색상
-    
-                // 두 색상을 혼합하여 물결 효과를 적용
-                vec3 finalColor = mix(color1, color2, 0.5 + 0.5 * wave);
-                gl_FragColor = vec4(finalColor, 0.8); // 알파값을 포함하여 색상 출력
-            }
-        `;
-    
-        // ShaderMaterial 생성
-        const pondMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                u_time: { value: 0 } // 시간 uniform 초기화
-            },
-            vertexShader: vertexShader,
-            fragmentShader: fragmentShader,
-        });
-    
-        const pond = new THREE.Mesh(pondGeometry, pondMaterial);
-        
-        // 연못 위치 설정
-        pond.position.set(0, 1.3, -0.51); // z축 방향으로 살짝 아래로 이동
-        this.scene.add(pond); // 씬에 추가
-    
-        return pond; // 연못 메쉬 반환
-    }
-    
-    update() {
-        // 시간에 따른 애니메이션 효과
-        if (this.pond) { // pond가 정의된 경우에만 업데이트
-            this.pond.material.uniforms.u_time.value += 0.05; // 시간을 증가시켜 물결 효과 생성
+    dismissSelection() {
+        if (this.currentLevel) {
+            this.currentLevel.dismissSelection()
         }
     }
 
-    
+    // 현재 클릭한 Mesh가 개구리가 있는 발판인지를 검사하고, 만약 개구리가 있는 발판이라면 selectPlatform 메서드로 연계하는 메서드
+    clickMesh(clickedMesh) {
+        console.log("clicked Mesh:", clickedMesh)
+        if (this.currentLevel) {
+            for (let platformRow of this.currentLevel.platforms) {
+                for (let platform of platformRow) {
+                    // 2가지 조건을 검사한다.
+                    // 1. 현재 클릭한 Mesh가 그 platform의 mesh일 경우 또는,
+                    // 2. frog가 올라와 있는 platform이고 현재 선택한 오브젝트가 그 frog일 경우
+                    if ((platform && checkInclusion(clickedMesh, platform.model)) ||
+                        (platform?.frog && checkInclusion(clickedMesh, platform.frog.model))) {
+                        // 만약 frog가 올라온 platform을 클릭했다면, platform 선택 메서드로 연계
+                        console.log("selected platform:", platform)
+                        this.currentLevel.selectPlatform(platform);
+                    }
+                }
+            }
+        }
+    }
+
     // 애니메이션 루프
     animate = () => {
         requestAnimationFrame(this.animate);
-    
+
         // 렌더러 크기 설정
         renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
         renderer.setPixelRatio(window.devicePixelRatio);
-    
+
         // 물결 애니메이션 업데이트
-        this.update(); // Board 인스턴스에서 update 호출
-    
+        this.update(); // update 호출
+
         // 씬 렌더링
         renderer.render(this.scene, this.camera);
+    }
+}
+
+class Board {
+    constructor(game, coordinates) {
+        this.game = game;
+        this.scene = new THREE.Scene();
+
+        this.selectedPlatform = null;
+
+        // coordinates should be list of vectors.
+        this.platforms = [];
+        for (let i = 0; i < 5; i++) {
+            const newRow = []
+            for (let j = 0; j < 5; j++) {
+                const platform = (j + i) % 2 ? null : new Platform(j, i, this);
+                newRow.push(platform);
+            }
+            this.platforms.push(newRow)
+        }
+        for (let coordinate of coordinates) {
+            // 연못 큐브 생성
+            if (this.platforms[coordinate.y][coordinate.x]) {
+                this.platforms[coordinate.y][coordinate.x].setFrog();
+            }
+        }
+    }
+
+    start() {
+        this.game.scene.add(this.scene);
     }
 
     checkVictory() {
@@ -223,24 +277,6 @@ class Board {
         if (this.selectedPlatform) {
             changeSceneColor(this.selectedPlatform.frog.model, 0xB4FF80)
             this.selectedPlatform = null;
-        }
-    }
-
-    // 현재 클릭한 Mesh가 개구리가 있는 발판인지를 검사하고, 만약 개구리가 있는 발판이라면 selectPlatform 메서드로 연계하는 메서드
-    clickMesh(clickedMesh) {
-        console.log("clicked Mesh:", clickedMesh)
-        for (let platformRow of this.platforms) {
-            for (let platform of platformRow) {
-                // 2가지 조건을 검사한다.
-                // 1. 현재 클릭한 Mesh가 그 platform의 mesh일 경우 또는,
-                // 2. frog가 올라와 있는 platform이고 현재 선택한 오브젝트가 그 frog일 경우
-                if ((platform && checkInclusion(clickedMesh, platform.model)) ||
-                    (platform?.frog && checkInclusion(clickedMesh, platform.frog.model))) {
-                    // 만약 frog가 올라온 platform을 클릭했다면, platform 선택 메서드로 연계
-                    console.log("selected platform:", platform)
-                    this.selectPlatform(platform);
-                }
-            }
         }
     }
 
@@ -282,6 +318,7 @@ class Board {
                 
                 const jumpsound = new Audio('../assets/jumpsound.mp3');
                 const jumpsound2 = new Audio('../assets/jumpsound.mp3');
+
                 // 사운드 재생
                 jumpsound.play();
   
@@ -367,9 +404,7 @@ class Board {
         console.log("Move completed.");
       }
     }
-    
-  
-  
+
     // 애니메이션 시작
     requestAnimationFrame(animate);
   }
@@ -611,17 +646,9 @@ window.onload = function init() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    // 게임 보드와 개구리 모델 설정
-    const level1_coordinates = [
-        { x: 0, y: 0 },
-        { x: 2, y: 2 },
-        { x: 1, y: 3 },
-        { x: 3, y: 3 }
-    ];
 
-
-    mainBoard = new Board(level1_coordinates)
-    console.log("main board:", mainBoard);
+    const game = new Game();
+    console.log("game:", game);
 
     // 마우스 클릭 이벤트 리스너
     window.addEventListener('click', (event) => {
@@ -632,26 +659,24 @@ window.onload = function init() {
         mouse.y = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
         // Raycaster 설정
-        raycaster.setFromCamera(mouse, mainBoard.camera);
+        raycaster.setFromCamera(mouse, game.camera);
 
         // 클릭된 오브젝트 확인
-        const intersects = raycaster.intersectObjects(mainBoard.scene.children, true);
+        const intersects = raycaster.intersectObjects(game.scene.children, true);
         if (intersects.length > 0) {
             const clickedObject = intersects[0].object;
             // 클릭된 오브젝트의 색상 변경
             if (clickedObject instanceof THREE.Mesh) {
                 // clickedObject를 mainBoard 클래스의 clickMesh 메서드로 전송
-                mainBoard.clickMesh(clickedObject);
+                game.clickMesh(clickedObject);
             }
         } else {
             // 오브젝트를 클릭한 것이 아닐 경우 선택 취소
-            mainBoard.dismissSelection()
+            game.dismissSelection()
         }
     });
 
-    const controls = new OrbitControls(mainBoard.camera, renderer.domElement);
-
-    mainBoard.animate()
+    game.start();
 }
 
 function checkInclusion(mesh, scene) {
@@ -663,34 +688,4 @@ function checkInclusion(mesh, scene) {
         object = object.parent;
     }
     return false;
-}
-
-function createWoodGrainTexture() {
-    const width = 256;  // 텍스처 너비
-    const height = 256; // 텍스처 높이
-    const size = width * height;
-    const data = new Uint8Array(size * 10); // RGB를 위한 배열
-
-    for (let i = 0; i < size; i++) {
-        const x = i % width;
-        const y = Math.floor(i / width);
-
-        // 가로선 나무 결 패턴
-        const grain = Math.sin(y / 15) * 10; // 가로 방향 패턴
-        const baseColor = 80; // 갈색 톤을 위한 기본 색상값
-
-        // 나무 색상 계산
-        const red = baseColor + grain + Math.random() * 50; // 빨간색
-        const green = baseColor + grain * 0.5; // 초록색
-        const blue = baseColor; // 파란색을 줄여 더 갈색으로
-
-        // 색상 값의 범위를 0-255로 제한
-        data[i * 3] = Math.min(255, Math.max(0, red));   // R
-        data[i * 3 + 1] = Math.min(255, Math.max(0, green)); // G
-        data[i * 3 + 2] = Math.min(255, Math.max(0, blue));  // B
-    }
-
-    const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
-    texture.needsUpdate = true; // 텍스처 업데이트
-    return texture;
 }
