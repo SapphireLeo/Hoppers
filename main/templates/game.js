@@ -735,13 +735,9 @@ class BlueFrog extends Frog {
     }
 
     applyBlueTexture() {
-        this.model.traverse((child) => {
-            if (child.isMesh) {
-                child.material = new THREE.MeshStandardMaterial({
-                    color: 0x87CEFA
-                });
-            }
-        });
+        if (this.model) {
+            changeSceneColor(this.model, 0x5555FF);
+        }
     }
 }
 
