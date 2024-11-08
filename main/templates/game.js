@@ -3,29 +3,30 @@ import {RGBAFormat} from "three";
 let mainBoard;
 
 let renderer;
+let controls;
 
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const level1_coordinates = [
-    { x: 0, y: 0 },
+    { x: 0, y: 0},
     { x: 2, y: 2 },
     { x: 1, y: 3 },
     { x: 3, y: 3 }
 ];
 const all_level_coordinates = [
     [
-        { x: 0, y: 0 },
-        { x: 2, y: 2 },
-        { x: 1, y: 3 },
-        { x: 3, y: 3 }
+        { x: 0, y: 0, type: 'stone' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 3, y: 3, type: 'blue' }
     ],
     [
-        { x: 3, y: 0 },
-        { x: 2, y: 1 },
-        { x: 4, y: 1 },
-        { x: 2, y: 2 }
+        { x: 2, y: 0, type: 'normal' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' }
     ]
 ]
 
@@ -52,8 +53,64 @@ class Game {
 
         this.pond = this.createPond();
 
-        for (let coordinate of all_level_coordinates) {
-            this.levels.push(new Board(this, coordinate));
+        this.levelSelectContainer = document.getElementById("level-select-container");
+        this.mainMenuContainer = document.getElementById("main-menu-container");
+        this.gameCanvas = document.getElementById("gameCanvas");
+        this.inGameContainer = document.getElementById("in-game-container");
+
+        console.log(all_level_coordinates)
+        for (let idx = 0; idx < all_level_coordinates.length; idx++) {
+            console.log(all_level_coordinates[idx])
+            const newLevel = new Board(this, all_level_coordinates[idx])
+            this.levels.push(newLevel);
+
+            const square = document.createElement("div");
+            square.classList.add("level-container")
+
+            const icon = document.createElement("img");
+            icon.src = "../assets/lotus-leaf.png";
+            icon.classList.add("icon")
+            square.appendChild(icon);
+
+            const levelNumber = document.createElement("div");
+            levelNumber.classList.add("level-number");
+            levelNumber.innerText = "" + idx; // 각 정사각형에 번호 표시
+            square.appendChild(levelNumber);
+
+            icon.onclick = () => {
+                console.log("Begin Level ", idx);
+                this.beginLevel(idx);
+            }
+
+
+            // 그리드 컨테이너에 정사각형 요소 추가
+            this.levelSelectContainer.appendChild(square);
+        }
+
+        // 게임 시작 버튼 클릭 시 레벨 선택 창으로 이동
+        document.getElementById("start-button").onclick = () => {
+            console.log('To Level Selection.');
+            this.toLevelSelection()
+        }
+
+        // 재시작 버튼 클릭 시 재시작
+        document.getElementById("refresh-button").onclick = () => {
+            console.log('Refreshing Current Level.');
+            this.currentLevel.refresh();
+        }
+
+        // 홈 버튼 클릭 시 처음으로
+        document.getElementById("home-button").onclick = () => {
+            console.log('To Home.');
+            this.currentLevel.end();
+            this.toHome();
+        }
+
+        // 메뉴 버튼 클릭 시 레벨 선택 창으로 이동
+        document.getElementById("level-button").onclick = () => {
+            console.log('To Level Selection.');
+            this.currentLevel.end();
+            this.toLevelSelection();
         }
 
         // 빛 설정
@@ -70,18 +127,44 @@ class Game {
 
         this.createBoardGameEdges(); // 보드게임판 테두리 추가
 
-        const controls = new OrbitControls(this.camera, renderer.domElement);
+        controls = new OrbitControls(this.camera, renderer.domElement);
 
         this.animate(); // 애니메이션 시작
     }
 
-    start() {
-        this.currentLevel = this.levels[0];
-        this.beginLevel();
+    toLevelSelection() {
+        this.currentLevel = null;
+        this.mainMenuContainer.style.visibility = "hidden";
+        this.mainMenuContainer.style.pointerEvents = "none";
+        this.inGameContainer.style.visibility = "hidden";
+        this.inGameContainer.style.pointerEvents = "none";
+        this.levelSelectContainer.style.visibility = "visible";
+        this.levelSelectContainer.style.pointerEvents = "all";
     }
 
-    beginLevel() {
-        this.currentLevel.start();
+    toHome() {
+        this.currentLevel = null;
+        this.inGameContainer.style.visibility = "hidden";
+        this.inGameContainer.style.pointerEvents = "none";
+        this.levelSelectContainer.style.visibility = "hidden";
+        this.levelSelectContainer.style.pointerEvents = "none";
+        this.mainMenuContainer.style.visibility = "visible";
+        this.mainMenuContainer.style.pointerEvents = "all";
+    }
+
+    beginLevel(levelNumber) {
+        if (!this.currentLevel) {
+            this.currentLevel = this.levels[levelNumber];
+            this.currentLevel.start();
+
+            this.levelSelectContainer.style.visibility = "hidden";
+            this.levelSelectContainer.style.pointerEvents = "none";
+
+            this.gameCanvas.style.pointerEvents = "all";
+
+            this.inGameContainer.style.visibility = "visible";
+            this.inGameContainer.style.pointerEvents = "none";
+        }
     }
 
     createPond() {
@@ -220,6 +303,8 @@ class Game {
     animate = () => {
         requestAnimationFrame(this.animate);
 
+        controls.update(); // OrbitControls가 계속 업데이트되도록 호출
+
         // 렌더러 크기 설정
         renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.8);
         renderer.setPixelRatio(window.devicePixelRatio);
@@ -235,10 +320,16 @@ class Game {
 class Board {
     constructor(game, coordinates) {
         this.game = game;
-        this.scene = new THREE.Scene();
+        this.scene = null;
+        this.coordinates = coordinates;
 
         this.selectedPlatform = null;
 
+        this.init();
+    }
+
+    init() {
+        this.scene = new THREE.Scene();
         // coordinates should be list of vectors.
         this.platforms = [];
         for (let i = 0; i < 5; i++) {
@@ -249,16 +340,29 @@ class Board {
             }
             this.platforms.push(newRow)
         }
-        for (let coordinate of coordinates) {
+        for (let coordinate of this.coordinates) {
             // 연못 큐브 생성
             if (this.platforms[coordinate.y][coordinate.x]) {
-                this.platforms[coordinate.y][coordinate.x].setFrog();
+                console.log(coordinate)
+                this.platforms[coordinate.y][coordinate.x].setFrog(coordinate.type);
             }
         }
     }
 
     start() {
         this.game.scene.add(this.scene);
+    }
+
+    end() {
+        console.log(this.scene);
+        this.game.scene.remove(this.scene);
+    }
+
+    refresh() {
+        this.end();
+        this.init();
+        console.log(this.platforms);
+        this.start();
     }
 
     checkVictory() {
@@ -540,16 +644,16 @@ class Platform {
         this.board.scene.add(spotlight.target);
     }
 
-    setFrog() {
-        if (this.x === 2 && this.y === 2) {
-            this.frog = new StoneFrog(this);
+    setFrog(type) {
+        let newFrog;
+        if(type === 'stone') {
+            newFrog = new StoneFrog(this);
+        } else if (type === 'blue') {
+            newFrog = new BlueFrog(this);
+        } else {
+            newFrog = new Frog(this);
         }
-        else if (this.x === 1 && this.y === 3){
-            this.frog = new blueFrog(this);
-        }
-        else {
-            this.frog = new Frog(this);
-        }
+        this.frog = newFrog;
     }
 
     addLotusFrog() {
@@ -578,31 +682,30 @@ class Frog {
         // 개구리 모델 로드
         const loader = new GLTFLoader();
         loader.load('../assets/frog.glb', (gltf) => {
-            this.model = gltf.scene;
-
-            this.model.position.set((this.platform.x - 2) * 1.3, (this.platform.y - 1) * 1.3, 0.5); // 각 플랫폼 중앙에 배치
-            this.model.scale.set(0.5, 0.5, 0.5);
-            this.model.rotation.x = Math.PI / 2;
-            this.platform.board.scene.add(this.model);
-
-            // StoneFrog인지 체크하고 돌 같은 질감 적용
-            if (this instanceof StoneFrog) {
-                this.applyStoneTexture();
-            }
-
-            if (this instanceof blueFrog) {
-                this.applyBlueTexture();
-            }
-
+            this.loadModel(gltf);
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
         });
+    }
+
+    loadModel(gltf) {
+        this.model = gltf.scene;
+
+        this.model.position.set((this.platform.x - 2) * 1.3, (this.platform.y - 1) * 1.3, 0.5); // 각 플랫폼 중앙에 배치
+        this.model.scale.set(0.5, 0.5, 0.5);
+        this.model.rotation.x = Math.PI / 2;
+        this.platform.board.scene.add(this.model);
     }
 }
 
 class StoneFrog extends Frog {
     constructor(platform) {
         super(platform);
+    }
+
+    loadModel(gltf) {
+        super.loadModel(gltf);
+        this.applyStoneTexture()
     }
 
     applyStoneTexture() {
@@ -621,9 +724,14 @@ class StoneFrog extends Frog {
     }
 }
 
-class blueFrog extends Frog {
+class BlueFrog extends Frog {
     constructor(platform) {
         super(platform);
+    }
+
+    loadModel(gltf) {
+        super.loadModel(gltf);
+        this.applyBlueTexture()
     }
 
     applyBlueTexture() {
@@ -675,8 +783,6 @@ window.onload = function init() {
             game.dismissSelection()
         }
     });
-
-    game.start();
 }
 
 function checkInclusion(mesh, scene) {

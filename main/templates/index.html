@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Hoppers Game</title>
+    <link rel="stylesheet" href="game.css">
     <script type="importmap">
         {
           "imports": {
@@ -16,28 +17,22 @@
 <!--    <script type="module" src="../Common/GLTFLoader.js"></script>-->
 <!--    <script type="module" src="../Common/orbitcontrols.js"></script>-->
     <script type="module" src="./game.js"></script>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #ffffff;
-        }
-
-        #gameCanvas {
-            width: 800px;
-            height: 600px;
-            background: #000000;
-        }
-    </style>
 </head>
 <body>
     <h1>Hoppers</h1>
-    <canvas id="gameCanvas"></canvas>
-
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="main-menu-container">
+            <img id="title-image" src="../assets/Title.png" alt="title image">
+            <img id="start-button" src="../assets/start-button.png" alt="start button">
+        </div>
+        <div id="level-select-container"></div>
+        <div id="in-game-container">
+            <img id="home-button" class="button" src="../assets/home.png" alt="to home">
+            <img id="level-button" class="button" src="../assets/list.png" alt="to level selection">
+            <img id="refresh-button" class="button" src="../assets/refresh.png" alt="refresh">
+        </div>
+    </div>
     <p id="scoreboard"></p>
 </body>
 </html>
