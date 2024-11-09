@@ -1,6 +1,6 @@
 import {RGBAFormat} from "three";
 
-let mainBoard;
+let game;
 
 let renderer;
 let controls;
@@ -111,6 +111,11 @@ class Game {
             console.log('To Level Selection.');
             this.currentLevel.end();
             this.toLevelSelection();
+        }
+
+        document.getElementById("hint-button").onclick = () => {
+            console.log('Show Hint.');
+            this.currentLevel.showHint();
         }
 
         // 빛 설정
@@ -322,6 +327,7 @@ class Board {
         this.game = game;
         this.scene = null;
         this.coordinates = coordinates;
+        this.hint = {x: null, y: null};
 
         this.selectedPlatform = null;
 
@@ -350,6 +356,7 @@ class Board {
     }
 
     start() {
+        this.getHint();
         this.game.scene.add(this.scene);
     }
 
@@ -401,10 +408,10 @@ class Board {
     }
 
     hop(origin, destination) {
-        // 출발지와 도착지로 선택한 플랫폼이 위아래로 2칸 차이일 때
-        if (Math.abs(origin.x - destination.x) === 2 && Math.abs(origin.y - destination.y) === 2) {
+        // 출발지와 도착지로 선택한 플랫폼이 위아래로 2칸 차이, 또는 수평으로 4칸 차이일 때만
+        const middlePlatform = this.platforms[(origin.y + destination.y) / 2][(origin.x + destination.x) / 2];
+        if (middlePlatform && (origin.y !== destination.y && origin.x !== destination.x)) {
             // 두 플랫폼 사이에 있는 플랫폼
-            const middlePlatform = this.platforms[(origin.y + destination.y) / 2][(origin.x + destination.x) / 2];
             console.log("lets hop");
             // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
             if (middlePlatform.frog) {
@@ -429,15 +436,18 @@ class Board {
                 setTimeout(() => {
                   // 0.5초 후에 실행할 코드
                   jumpsound2.play();
-                  middlePlatform.removeFrog();
                 }, 360); // 500ms = 0.5초
+
+                middlePlatform.removeFrog();
                 
                 this.selectedPlatform = null;
   
                 destination.frog.model.traverse(child => {
-                  if (child.isMesh) {
+                    if (child.isMesh) {
                       child.material.color.set(0xB4FF80);
-                  }
+                    }
+
+                this.getHint() // 힌트 정보 갱신
               });
                 // hop의 결과 개구리가 한 개만 남았다면 승리 메세지 출력
                 if (this.checkVictory()) {
@@ -447,9 +457,100 @@ class Board {
             }
         }
     }
+
+    getHint() {
+        const boardCopy = []
+        for (let i = 0; i < 5; i++) {
+            const newRow = []
+            for (let j = 0; j < 5; j++) {
+                if (this.platforms[i][j]?.frog) {
+                    console.log(i, j, this.platforms[i][j]);
+                    newRow.push(2);
+                } else if (this.platforms[i][j]) {
+                    newRow.push(1);
+                } else {
+                    newRow.push(0);
+                }
+            }
+            boardCopy.push(newRow);
+        }
+
+        const answer = Board.simulate(boardCopy)
+        if(answer) {
+            this.hint.x = answer.x;
+            this.hint.y = answer.y;
+        } else {
+            this.hint.x = this.hint.y = null;
+        }
+    }
     
-    
+    // 시뮬레이션을 돌려보고 결과를 제공하는 재귀 함수
+    static simulate(boardArray) {
+        for (let i = 0; i < 5; i++) {
+            const newRow = []
+            for (let j = 0; j < 5; j++) {
+                if(boardArray[i][j] === 2) {
+                    for (let direction of [
+                        {x: 1, y: 1},
+                        {x: 2, y: 0},
+                        {x: 1, y: -1},
+                        {x: 0, y: -2},
+                        {x: -1, y: -1},
+                        {x: -2, y: 0},
+                        {x: -1, y: 1},
+                        {x: 0, y: 2},
+                    ]) {
+                        if (i + direction.y * 2 < 0 || i + direction.y * 2 > 4 ||
+                            j + direction.x * 2 < 0 || j + direction.x * 2 > 4) continue;
+                        if (boardArray[i + direction.y][j + direction.x] === 2 &&
+                            boardArray[i + direction.y * 2][j + direction.x * 2] === 1) {
+                            const newBoardArray = deepCopy2DArray(boardArray);
+                            newBoardArray[i][j] = 1;
+                            newBoardArray[i + direction.y][j + direction.x] = 1;
+                            newBoardArray[i + direction.y * 2][j + direction.x * 2] = 2;
+                            if (countOccurrences(newBoardArray, 2) === 1) {
+                                return {x: j, y: i};
+                            } else {
+                                const answer =  Board.simulate(newBoardArray);
+                                if (answer) return {x: j, y: i};
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    showHint() {
+        if (this.hint.x === null) return;
+        const hintPlatform = this.platforms[this.hint.y][this.hint.x];
+
+        // 스포트라이트 생성
+        const spotlight = new THREE.SpotLight(0xffff00, 15);
+        spotlight.angle = Math.PI / 10; // 빛 확산 각도 설정
+        spotlight.penumbra = 1.0; // 부드러운 가장자리 설정
+        spotlight.decay = 1; // 빛 감쇠율 설정
+        spotlight.distance = 10; // 빛이 비치는 거리 설정
+
+        // 스포트라이트 위치 설정 (연잎 위에 위치시킴)
+        spotlight.position.set(hintPlatform.model.position.x, hintPlatform.model.position.y, hintPlatform.model.position.z+3);
+
+        // 스포트라이트가 연잎을 바라보도록 타겟 설정
+        spotlight.target = hintPlatform.model;
+
+        // TODO: Edge를 더할 거라면 자연스럽게 사라지도록 연출해야 함.
+        // hintPlatform.highlightEdges(hintPlatform.model);
+
+        // 스포트라이트와 타겟을 장면에 추가
+        this.scene.add(spotlight);
+
+        setTimeout(() => {
+            this.scene.remove(spotlight);
+        }, 2000);
+    }
   }
+
   function animateMove(startPosition, endPosition, frog) {
     function findMeshInGroup(group) {
       group.children.forEach(child => {
@@ -585,12 +686,6 @@ class Platform {
             this.model = leaf;
             this.board.scene.add(this.model);
 
-            // 첫 번째 연잎이라면 하이라이트 추가
-            if (this.x === 0 && this.y === 0) {
-                // 연잎 테두리를 빛나게 하는 함수 호출
-                this.highlightEdges(leaf);
-            }
-
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
         });
@@ -626,22 +721,6 @@ class Platform {
                 }
             }
         });
-        // 스포트라이트 생성
-        const spotlight = new THREE.SpotLight(0xffff00, 15);
-        spotlight.angle = Math.PI / 10; // 빛 확산 각도 설정
-        spotlight.penumbra = 1.0; // 부드러운 가장자리 설정
-        spotlight.decay = 1; // 빛 감쇠율 설정
-        spotlight.distance = 10; // 빛이 비치는 거리 설정
-
-        // 스포트라이트 위치 설정 (연잎 위에 위치시킴)
-        spotlight.position.set(object.position.x, object.position.y, object.position.z+3);
-
-        // 스포트라이트가 연잎을 바라보도록 타겟 설정
-        spotlight.target = object;
-
-        // 스포트라이트와 타겟을 장면에 추가
-        this.board.scene.add(spotlight);
-        this.board.scene.add(spotlight.target);
     }
 
     setFrog(type) {
@@ -654,15 +733,6 @@ class Platform {
             newFrog = new Frog(this);
         }
         this.frog = newFrog;
-    }
-
-    addLotusFrog() {
-        if (this.lotusLoaded && this.frogLoaded) {
-            this.mesh.add(this.frog.model);
-            this.frog.model.position.set(0, 0.2, 1.5);
-            this.frog.model.scale.set(1.3, 1.3, 1.3);
-            this.frog.model.rotation.x = Math.PI / 3;
-        }
     }
 
     removeFrog() {
@@ -751,7 +821,7 @@ window.onload = function init() {
     const mouse = new THREE.Vector2();
 
 
-    const game = new Game();
+    game = new Game();
     console.log("game:", game);
 
     // 마우스 클릭 이벤트 리스너
@@ -790,4 +860,22 @@ function checkInclusion(mesh, scene) {
         object = object.parent;
     }
     return false;
+}
+
+function deepCopy2DArray(array) {
+    return array.map(row => row.slice());
+}
+
+function countOccurrences(array, target) {
+    let count = 0;
+
+    for (let row of array) {
+        for (let element of row) {
+            if (element === target) {
+                count++;
+            }
+        }
+    }
+
+    return count;
 }

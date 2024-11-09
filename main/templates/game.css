@@ -152,3 +152,12 @@ body {
     width: 10%;
     height: auto;
 }
+
+#in-game-container #hint-button{
+    position: absolute;
+    top: 10px;  /* 아래쪽에 10px 간격 */
+    right: 10px;    /* 왼쪽에 10px 간격 */
+
+    width: 10%;
+    height: auto;
+}
