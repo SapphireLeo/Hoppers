@@ -736,66 +736,66 @@ class Board {
   }
 
 function animateMove(startPosition, endPosition, frog) {
-function findMeshInGroup(group) {
-  group.children.forEach(child => {
-      if (child instanceof THREE.Mesh && child.name === 'frog111') {
-          console.log("특정 Mesh 찾음:", child);
-          animateJumpShapeKey(child); // jump 애니메이션 적용
-      } else if (child instanceof THREE.Group) {
-          console.log("Group 객체를 찾음:", child);
-          findMeshInGroup(child); // 자식이 Group일 경우 재귀적으로 탐색
-      }
-  });
-}
+    function findMeshInGroup(group) {
+        group.children.forEach(child => {
+            if (child instanceof THREE.Mesh && child.name === 'frog111') {
+                console.log("특정 Mesh 찾음:", child);
+                animateJumpShapeKey(child); // jump 애니메이션 적용
+            } else if (child instanceof THREE.Group) {
+                console.log("Group 객체를 찾음:", child);
+                findMeshInGroup(child); // 자식이 Group일 경우 재귀적으로 탐색
+            }
+        });
+    }
 
-// frog.model이 그룹이라면 그 그룹 안에서 메시를 찾아야 함
-if (frog.model instanceof THREE.Group) {
-  findMeshInGroup(frog.model);
-} else {
-  console.log('frog.model은 Group이 아닙니다.');
-}
+    // frog.model이 그룹이라면 그 그룹 안에서 메시를 찾아야 함
+    if (frog.model instanceof THREE.Group) {
+        findMeshInGroup(frog.model);
+    } else {
+        console.log('frog.model은 Group이 아닙니다.');
+    }
 
-const duration = 1; // 이동 애니메이션 시간
-let startTime = null;
+    const duration = 1; // 이동 애니메이션 시간
+    let startTime = null;
 
-// 이동 중 개구리가 회전하도록 처리
-function animate(time) {
-  if (startTime === null) startTime = time;
-  const elapsed = (time - startTime) / 750; // 시간 초 단위로 계산
-  const progress = Math.min(elapsed / duration, 1);
+    // 이동 중 개구리가 회전하도록 처리
+    function animate(time) {
+        if (startTime === null) startTime = time;
+        const elapsed = (time - startTime) / 750; // 시간 초 단위로 계산
+        const progress = Math.min(elapsed / duration, 1);
 
-  // 기본 z축 위치 고정
-  const baseZ = startPosition.z;
+        // 기본 z축 위치 고정
+        const baseZ = startPosition.z;
 
-  // 개구리의 위치를 점진적으로 이동
-  frog.model.position.lerpVectors(startPosition, endPosition, progress);
+        // 개구리의 위치를 점진적으로 이동
+        frog.model.position.lerpVectors(startPosition, endPosition, progress);
 
-  // 점프 곡선 생성 (2번 점프하게끔 주기를 2배로 설정하고, Math.abs로 음수 방지)
-  const jumpHeight = 1; // 점프 높이 설정
-  frog.model.position.z = baseZ + jumpHeight * 1.7 *Math.abs(Math.sin(2 * Math.PI * progress));
+        // 점프 곡선 생성 (2번 점프하게끔 주기를 2배로 설정하고, Math.abs로 음수 방지)
+        const jumpHeight = 1; // 점프 높이 설정
+        frog.model.position.z = baseZ + jumpHeight * 1.7 *Math.abs(Math.sin(2 * Math.PI * progress));
 
-  // 목표 위치를 향한 방향 계산 (회전할 방향)
-  const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize();
-  let deg;
-  if (startPosition.x < endPosition.x) {
-    deg = (startPosition.y < endPosition.y) ? 2 : 1;
-  } else {
-    deg = (startPosition.y < endPosition.y) ? -2 : -1;
-  }
+        // 목표 위치를 향한 방향 계산 (회전할 방향)
+        const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize();
+        let deg;
+        if (startPosition.x < endPosition.x) {
+            deg = (startPosition.y < endPosition.y) ? 2 : 1;
+        } else {
+            deg = (startPosition.y < endPosition.y) ? -2 : -1;
+        }
 
-  // 개구리의 회전: x, y 방향만 변경하고 z는 고정
-  frog.model.rotation.y = deg;
+        // 개구리의 회전: x, y 방향만 변경하고 z는 고정
+        frog.model.rotation.y = deg;
 
-  // 애니메이션이 끝났을 때
-  if (progress < 1) {
+        // 애니메이션이 끝났을 때
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            console.log("Move completed.");
+        }
+    }
+
+    // 애니메이션 시작
     requestAnimationFrame(animate);
-  } else {
-    console.log("Move completed.");
-  }
-}
-
-// 애니메이션 시작
-requestAnimationFrame(animate);
 }
 function animateJumpShapeKey(mesh) {
     console.log("jump");//점프 애니메이션 동작
@@ -1078,6 +1078,7 @@ function saveOriginalMaterial(model) {
         }
     });
 }
+
 function restoreOriginalColor(model) {
     model.traverse((child) => {
         if (child.isMesh && originalMaterials[child.uuid]) {
