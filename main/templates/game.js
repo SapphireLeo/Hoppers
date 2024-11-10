@@ -94,13 +94,8 @@ class Game {
     constructor() {
         this.scene = new THREE.Scene();
 
-        // 배경 이미지 설정
-        const loader = new THREE.TextureLoader();
-        const sun = loader.load('../assets/sun_background.jpg');
-        const moon = loader.load('../assets/moon_background.jpg');
-
-        // 배경으로 적용
-        this.scene.background = sun;
+        // 배경
+        this.scene.background = new THREE.Color(0xc2d8f5);
 
         // this.scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
@@ -189,12 +184,20 @@ class Game {
 
         document.getElementById("sun-button").onclick = () => {
             console.log('Change Background to Sun.');
-            this.scene.background = sun;
+            this.changeBackgroundColor(new THREE.Color(0xc2d8f5));
+            this.scene.remove(yellowLight1);
+            this.scene.remove(yellowLight2);
+            this.scene.remove(yellowLight3);
+            this.scene.remove(yellowLight4);
         }
 
         document.getElementById("moon-button").onclick = () => {
             console.log('Change Background to Moon.');
-            this.scene.background = moon;
+            this.changeBackgroundColor(new THREE.Color(0x000040));
+            this.scene.add(yellowLight1);
+            this.scene.add(yellowLight2);
+            this.scene.add(yellowLight3);
+            this.scene.add(yellowLight4);
         }
 
         // 빛 설정
@@ -205,11 +208,40 @@ class Game {
         const light2 = new THREE.AmbientLight(0xffffff, 1);
         this.scene.add(light2);
 
+        // 강한 노란색 광원 추가
+        const yellowLight1 = new THREE.PointLight(0xffff00, 2, 10);
+        yellowLight1.position.set(4, 1, 1);
+        const yellowLight2 = new THREE.PointLight(0xffff00, 2, 10);
+        yellowLight2.position.set(-4, 1, 1);
+        const yellowLight3 = new THREE.PointLight(0xffff00, 2, 10);
+        yellowLight3.position.set(0, 5, 1);
+        const yellowLight4 = new THREE.PointLight(0xffff00, 2, 10);
+        yellowLight4.position.set(0, -2.5, 1);
+
         this.createBoardGameEdges(); // 보드게임판 테두리 추가
 
         controls = new OrbitControls(this.camera, renderer.domElement);
 
         this.animate(); // 애니메이션 시작
+    }
+
+    // 배경 색깔 서서히 변경하는 함수
+    changeBackgroundColor(targetColor) {
+        const startColor = this.scene.background.clone();
+        let progress = 0;
+
+        const animate = () => {
+            progress += 0.03;
+            if (progress > 1) progress = 1;
+
+            this.scene.background.lerpColors(startColor, targetColor, progress);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+
+        animate();
     }
 
     toLevelSelection() {
