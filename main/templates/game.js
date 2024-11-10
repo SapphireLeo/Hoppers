@@ -4,6 +4,7 @@ let game;
 
 let renderer;
 let controls;
+let originalMaterials = {}; // 원래의 재질 저장
 
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
@@ -79,6 +80,7 @@ class Game {
         this.mainMenuContainer = document.getElementById("main-menu-container");
         this.gameCanvas = document.getElementById("gameCanvas");
         this.inGameContainer = document.getElementById("in-game-container");
+        this.gameClearMessage = document.getElementById("game-clear-container");
 
         console.log(all_level_coordinates)
         for (let idx = 0; idx < all_level_coordinates.length; idx++) {
@@ -175,6 +177,8 @@ class Game {
         this.mainMenuContainer.style.pointerEvents = "none";
         this.inGameContainer.style.visibility = "hidden";
         this.inGameContainer.style.pointerEvents = "none";
+        this.gameClearMessage.style.visibility = "hidden";
+        this.gameClearMessage.style.pointerEvents = "none";
         this.levelSelectContainer.style.visibility = "visible";
         this.levelSelectContainer.style.pointerEvents = "all";
     }
@@ -185,6 +189,8 @@ class Game {
         this.inGameContainer.style.pointerEvents = "none";
         this.levelSelectContainer.style.visibility = "hidden";
         this.levelSelectContainer.style.pointerEvents = "none";
+        this.gameClearMessage.style.visibility = "hidden";
+        this.gameClearMessage.style.pointerEvents = "none";
         this.mainMenuContainer.style.visibility = "visible";
         this.mainMenuContainer.style.pointerEvents = "all";
     }
@@ -418,7 +424,8 @@ class Board {
 
     dismissSelection() {
         if (this.selectedPlatform) {
-            changeSceneColor(this.selectedPlatform.frog.model, 0xB4FF80)
+            console.log(originalMaterials);
+            restoreOriginalColor(this.selectedPlatform.frog.model);
             this.selectedPlatform = null;
         }
     }
@@ -529,6 +536,13 @@ class Board {
             this.hint.y = answer.y;
         } else {
             this.hint.x = this.hint.y = null;
+        }
+
+        // hop의 결과 개구리가 한 개만 남았다면 승리 메세지 출력
+        if (this.checkVictory()) {
+            document.getElementById("game-clear-container").style.visibility = "visible";
+        } else {
+            document.getElementById("game-clear-container").style.visibility = "hidden";
         }
     }
 
@@ -646,69 +660,69 @@ class Board {
     }
   }
 
-  function animateMove(startPosition, endPosition, frog) {
-    function findMeshInGroup(group) {
-      group.children.forEach(child => {
-          if (child instanceof THREE.Mesh && child.name === 'frog111') {
-              console.log("특정 Mesh 찾음:", child);
-              animateJumpShapeKey(child); // jump 애니메이션 적용
-          } else if (child instanceof THREE.Group) {
-              console.log("Group 객체를 찾음:", child);
-              findMeshInGroup(child); // 자식이 Group일 경우 재귀적으로 탐색
-          }
-      });
-    }
-
-    // frog.model이 그룹이라면 그 그룹 안에서 메시를 찾아야 함
-    if (frog.model instanceof THREE.Group) {
-      findMeshInGroup(frog.model);
-    } else {
-      console.log('frog.model은 Group이 아닙니다.');
-    }
-
-    const duration = 1; // 이동 애니메이션 시간
-    let startTime = null;
-
-    // 이동 중 개구리가 회전하도록 처리
-    function animate(time) {
-      if (startTime === null) startTime = time;
-      const elapsed = (time - startTime) / 750; // 시간 초 단위로 계산
-      const progress = Math.min(elapsed / duration, 1);
-
-      // 기본 z축 위치 고정
-      const baseZ = startPosition.z;
-
-      // 개구리의 위치를 점진적으로 이동
-      frog.model.position.lerpVectors(startPosition, endPosition, progress);
-
-      // 점프 곡선 생성 (2번 점프하게끔 주기를 2배로 설정하고, Math.abs로 음수 방지)
-      const jumpHeight = 1; // 점프 높이 설정
-      frog.model.position.z = baseZ + jumpHeight * 1.7 *Math.abs(Math.sin(2 * Math.PI * progress));
-
-      // 목표 위치를 향한 방향 계산 (회전할 방향)
-      const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize();
-      let deg;
-      if (startPosition.x < endPosition.x) {
-        deg = (startPosition.y < endPosition.y) ? 2 : 1;
-      } else {
-        deg = (startPosition.y < endPosition.y) ? -2 : -1;
+function animateMove(startPosition, endPosition, frog) {
+function findMeshInGroup(group) {
+  group.children.forEach(child => {
+      if (child instanceof THREE.Mesh && child.name === 'frog111') {
+          console.log("특정 Mesh 찾음:", child);
+          animateJumpShapeKey(child); // jump 애니메이션 적용
+      } else if (child instanceof THREE.Group) {
+          console.log("Group 객체를 찾음:", child);
+          findMeshInGroup(child); // 자식이 Group일 경우 재귀적으로 탐색
       }
+  });
+}
 
-      // 개구리의 회전: x, y 방향만 변경하고 z는 고정
-      frog.model.rotation.y = deg;
+// frog.model이 그룹이라면 그 그룹 안에서 메시를 찾아야 함
+if (frog.model instanceof THREE.Group) {
+  findMeshInGroup(frog.model);
+} else {
+  console.log('frog.model은 Group이 아닙니다.');
+}
 
-      // 애니메이션이 끝났을 때
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        console.log("Move completed.");
-      }
-    }
+const duration = 1; // 이동 애니메이션 시간
+let startTime = null;
 
-    // 애니메이션 시작
-    requestAnimationFrame(animate);
+// 이동 중 개구리가 회전하도록 처리
+function animate(time) {
+  if (startTime === null) startTime = time;
+  const elapsed = (time - startTime) / 750; // 시간 초 단위로 계산
+  const progress = Math.min(elapsed / duration, 1);
+
+  // 기본 z축 위치 고정
+  const baseZ = startPosition.z;
+
+  // 개구리의 위치를 점진적으로 이동
+  frog.model.position.lerpVectors(startPosition, endPosition, progress);
+
+  // 점프 곡선 생성 (2번 점프하게끔 주기를 2배로 설정하고, Math.abs로 음수 방지)
+  const jumpHeight = 1; // 점프 높이 설정
+  frog.model.position.z = baseZ + jumpHeight * 1.7 *Math.abs(Math.sin(2 * Math.PI * progress));
+
+  // 목표 위치를 향한 방향 계산 (회전할 방향)
+  const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize();
+  let deg;
+  if (startPosition.x < endPosition.x) {
+    deg = (startPosition.y < endPosition.y) ? 2 : 1;
+  } else {
+    deg = (startPosition.y < endPosition.y) ? -2 : -1;
   }
-  function animateJumpShapeKey(mesh) {
+
+  // 개구리의 회전: x, y 방향만 변경하고 z는 고정
+  frog.model.rotation.y = deg;
+
+  // 애니메이션이 끝났을 때
+  if (progress < 1) {
+    requestAnimationFrame(animate);
+  } else {
+    console.log("Move completed.");
+  }
+}
+
+// 애니메이션 시작
+requestAnimationFrame(animate);
+}
+function animateJumpShapeKey(mesh) {
     console.log("jump");//점프 애니메이션 동작
     const duration = 0.06; // 'jump' 애니메이션 시간
     const returnDuration = 0.7; // 원래 자세로 돌아오는 애니메이션 시간
@@ -751,7 +765,7 @@ class Board {
 
     // 애니메이션 시작
     requestAnimationFrame(animate);
-  }
+}
 
 class Platform {
     constructor(x, y, board) {
@@ -769,6 +783,8 @@ class Platform {
         loader.load('../assets/lotus_leaf.glb', (gltf) => {
             const leaf = gltf.scene;
 
+            saveOriginalMaterial(leaf);
+
             // 스케일 조정
             leaf.scale.set(0.3, 0.3, 0.3);
 
@@ -780,7 +796,6 @@ class Platform {
 
             this.model = leaf;
             this.board.scene.add(this.model);
-
         }, undefined, (error) => {
             console.error('모델 로드 오류:', error);
         });
@@ -860,6 +875,8 @@ class Frog {
         this.model.scale.set(0.5, 0.5, 0.5);
         this.model.rotation.x = Math.PI / 2;
         this.platform.board.scene.add(this.model);
+
+        saveOriginalMaterial(this.model);
     }
 }
 
@@ -886,6 +903,8 @@ class StoneFrog extends Frog {
                 });
             }
         });
+
+        saveOriginalMaterial(this.model);
     }
 }
 
@@ -903,6 +922,8 @@ class BlueFrog extends Frog {
         if (this.model) {
             changeSceneColor(this.model, 0x5555FF);
         }
+
+        saveOriginalMaterial(this.model);
     }
 }
 
@@ -973,4 +994,20 @@ function countFrogs(array) {
     }
 
     return count;
+}
+
+function saveOriginalMaterial(model) {
+    model.traverse((child) => {
+        if (child.isMesh) {
+            originalMaterials[child.uuid] = child.material.clone();
+        }
+    });
+}
+function restoreOriginalColor(model) {
+    model.traverse((child) => {
+        if (child.isMesh && originalMaterials[child.uuid]) {
+            console.log("original materials:", originalMaterials[child.uuid])
+            child.material = originalMaterials[child.uuid].clone(); // 원래의 재질로 복원
+        }
+    });
 }
