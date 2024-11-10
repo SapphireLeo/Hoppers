@@ -4,6 +4,7 @@ let game;
 
 let renderer;
 let controls;
+let originalMaterials = {}; // 원래의 재질 저장
 
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
@@ -57,6 +58,7 @@ class Game {
         this.mainMenuContainer = document.getElementById("main-menu-container");
         this.gameCanvas = document.getElementById("gameCanvas");
         this.inGameContainer = document.getElementById("in-game-container");
+        this.gameClearMessage = document.getElementById("game-clear-container");
 
         console.log(all_level_coordinates)
         for (let idx = 0; idx < all_level_coordinates.length; idx++) {
@@ -143,6 +145,8 @@ class Game {
         this.mainMenuContainer.style.pointerEvents = "none";
         this.inGameContainer.style.visibility = "hidden";
         this.inGameContainer.style.pointerEvents = "none";
+        this.gameClearMessage.style.visibility = "hidden";
+        this.gameClearMessage.style.pointerEvents = "none";
         this.levelSelectContainer.style.visibility = "visible";
         this.levelSelectContainer.style.pointerEvents = "all";
     }
@@ -153,6 +157,8 @@ class Game {
         this.inGameContainer.style.pointerEvents = "none";
         this.levelSelectContainer.style.visibility = "hidden";
         this.levelSelectContainer.style.pointerEvents = "none";
+        this.gameClearMessage.style.visibility = "hidden";
+        this.gameClearMessage.style.pointerEvents = "none";
         this.mainMenuContainer.style.visibility = "visible";
         this.mainMenuContainer.style.pointerEvents = "all";
     }
@@ -386,7 +392,8 @@ class Board {
 
     dismissSelection() {
         if (this.selectedPlatform) {
-            changeSceneColor(this.selectedPlatform.frog.model, 0xB4FF80)
+            console.log(originalMaterials);
+            restoreOriginalColor(this.selectedPlatform.frog.model);
             this.selectedPlatform = null;
         }
     }
@@ -409,8 +416,10 @@ class Board {
 
     hop(origin, destination) {
         // 출발지와 도착지로 선택한 플랫폼이 위아래로 2칸 차이, 또는 수평으로 4칸 차이일 때만
-        const middlePlatform = this.platforms[(origin.y + destination.y) / 2][(origin.x + destination.x) / 2];
-        if (middlePlatform && (origin.y !== destination.y && origin.x !== destination.x)) {
+        if ((Math.abs(origin.y - destination.y) === 2 && Math.abs(origin.x - destination.x) === 2)
+        || (Math.abs(origin.y - destination.y) === 0 && Math.abs(origin.x - destination.x) === 4)
+        || (Math.abs(origin.y - destination.y) === 4 && Math.abs(origin.x - destination.x) === 0)) {
+            const middlePlatform = this.platforms[(origin.y + destination.y) / 2][(origin.x + destination.x) / 2];
             // 두 플랫폼 사이에 있는 플랫폼
             console.log("lets hop");
             // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
@@ -439,21 +448,12 @@ class Board {
                 }, 360); // 500ms = 0.5초
 
                 middlePlatform.removeFrog();
-                
-                this.selectedPlatform = null;
-  
-                destination.frog.model.traverse(child => {
-                    if (child.isMesh) {
-                      child.material.color.set(0xB4FF80);
-                    }
 
-                this.getHint() // 힌트 정보 갱신
-              });
-                // hop의 결과 개구리가 한 개만 남았다면 승리 메세지 출력
-                if (this.checkVictory()) {
-                    document.getElementById("scoreboard").textContent = "cleared!";
-                    console.log("stage cleared!");
-                }
+                this.selectedPlatform = destination;
+
+                this.dismissSelection();
+
+                this.getHint(); // 힌트 정보 갱신
             }
         }
     }
@@ -481,6 +481,13 @@ class Board {
             this.hint.y = answer.y;
         } else {
             this.hint.x = this.hint.y = null;
+        }
+
+        // hop의 결과 개구리가 한 개만 남았다면 승리 메세지 출력
+        if (this.checkVictory()) {
+            document.getElementById("game-clear-container").style.visibility = "visible";
+        } else {
+            document.getElementById("game-clear-container").style.visibility = "hidden";
         }
     }
     
@@ -673,6 +680,7 @@ class Platform {
         const loader = new GLTFLoader();
         loader.load('../assets/lotus_leaf.glb', (gltf) => {
             const leaf = gltf.scene;
+            saveOriginalMaterial(leaf);
 
             // 스케일 조정
             leaf.scale.set(0.3, 0.3, 0.3);
@@ -760,11 +768,12 @@ class Frog {
 
     loadModel(gltf) {
         this.model = gltf.scene;
-
         this.model.position.set((this.platform.x - 2) * 1.3, (this.platform.y - 1) * 1.3, 0.5); // 각 플랫폼 중앙에 배치
         this.model.scale.set(0.5, 0.5, 0.5);
         this.model.rotation.x = Math.PI / 2;
         this.platform.board.scene.add(this.model);
+
+        saveOriginalMaterial(this.model);
     }
 }
 
@@ -791,6 +800,8 @@ class StoneFrog extends Frog {
                 });
             }
         });
+
+        saveOriginalMaterial(this.model);
     }
 }
 
@@ -808,6 +819,8 @@ class BlueFrog extends Frog {
         if (this.model) {
             changeSceneColor(this.model, 0x5555FF);
         }
+
+        saveOriginalMaterial(this.model);
     }
 }
 
@@ -878,4 +891,21 @@ function countOccurrences(array, target) {
     }
 
     return count;
+}
+
+function saveOriginalMaterial(model) {
+    model.traverse((child) => {
+        if (child.isMesh) {
+            originalMaterials[child.uuid] = child.material.clone();
+        }
+    });
+}
+
+function restoreOriginalColor(model) {
+    model.traverse((child) => {
+        if (child.isMesh && originalMaterials[child.uuid]) {
+            console.log("original materials:", originalMaterials[child.uuid])
+            child.material = originalMaterials[child.uuid].clone(); // 원래의 재질로 복원
+        }
+    });
 }
