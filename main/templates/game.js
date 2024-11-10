@@ -46,7 +46,16 @@ function changeSceneColor(scene, color) {
 class Game {
     constructor() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
+
+        // 배경 이미지 설정
+        const loader = new THREE.TextureLoader();
+        const sun = loader.load('../assets/sun_background.jpg');
+        const moon = loader.load('../assets/moon_background.jpg');
+
+        // 배경으로 적용
+        this.scene.background = sun;
+
+        // this.scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.currentLevel = null;
         this.levels = [];
@@ -116,6 +125,16 @@ class Game {
         document.getElementById("hint-button").onclick = () => {
             console.log('Show Hint.');
             this.currentLevel.showHint(light, light2);
+        }
+
+        document.getElementById("sun-button").onclick = () => {
+            console.log('Change Background to Sun.');
+            this.scene.background = sun;
+        }
+
+        document.getElementById("moon-button").onclick = () => {
+            console.log('Change Background to Moon.');
+            this.scene.background = moon;
         }
 
         // 빛 설정

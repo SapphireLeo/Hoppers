@@ -161,3 +161,21 @@ body {
     width: 10%;
     height: auto;
 }
+
+#in-game-container #sun-button{
+    position: absolute;
+    top: 190px;  /* 아래쪽에 10px 간격 */
+    right: 30px;    /* 왼쪽에 10px 간격 */
+
+    width: 6%;
+    height: auto;
+}
+
+#in-game-container #moon-button{
+    position: absolute;
+    top: 300px;  /* 아래쪽에 10px 간격 */
+    right: 30px;    /* 왼쪽에 10px 간격 */
+
+    width: 7%;
+    height: auto;
+}
