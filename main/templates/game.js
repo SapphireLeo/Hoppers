@@ -18,17 +18,30 @@ const level1_coordinates = [
 ];
 const all_level_coordinates = [
     [
-        { x: 0, y: 0, type: 'stone' },
+        { x: 0, y: 0, type: 'normal' },
         { x: 2, y: 2, type: 'normal' },
         { x: 1, y: 3, type: 'normal' },
-        { x: 3, y: 3, type: 'blue' }
+        { x: 3, y: 3, type: 'normal' }
     ],
     [
         { x: 2, y: 0, type: 'normal' },
         { x: 1, y: 1, type: 'normal' },
         { x: 3, y: 1, type: 'normal' },
         { x: 2, y: 2, type: 'normal' }
-    ]
+    ],
+    [
+        { x: 2, y: 0, type: 'stone' },
+        { x: 1, y: 1, type: 'stone' },
+        { x: 3, y: 1, type: 'stone' },
+        { x: 2, y: 2, type: 'normal' }
+    ],
+    [
+        { x: 0, y: 0, type: 'blue' },
+        { x: 1, y: 1, type: 'stone' },
+        { x: 2, y: 2, type: 'stone' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 1, y: 3, type: 'stone' }
+    ],
 ]
 
 function changeSceneColor(scene, color) {
@@ -413,48 +426,66 @@ class Board {
             this.dismissSelection();
         }
     }
+    
+    // Hop가 가능한지 살피고 가능하다면 중간에 있는 플랫폼들을 배열로 묶어서 리턴
+    isAbleToHop(origin, destination) {
+        if (origin.frog instanceof StoneFrog) return false;
+        else if (origin.frog instanceof BlueFrog) {
+            if (Math.abs(origin.y - destination.y) === 3 && Math.abs(origin.x - destination.x) === 3) {
+                const middlePlatform1 = this.platforms[(origin.y + destination.y)/2-0.5][(origin.x + destination.x)/2-0.5]
+                const middlePlatform2 = this.platforms[(origin.y + destination.y)/2+0.5][(origin.x + destination.x)/2+0.5]
+                if (middlePlatform1.frog && middlePlatform2.frog) { return [middlePlatform1, middlePlatform2]}
+                else return false;
+            } else return false;
+        }
+        else {
+            if ((Math.abs(origin.y - destination.y) === 2 && Math.abs(origin.x - destination.x) === 2)
+                || (Math.abs(origin.y - destination.y) === 0 && Math.abs(origin.x - destination.x) === 4)
+                || (Math.abs(origin.y - destination.y) === 4 && Math.abs(origin.x - destination.x) === 0)) {
+                const middlePlatform = this.platforms[(origin.y + destination.y)/2][(origin.x + destination.x)/2]
+                if (middlePlatform.frog) { return [middlePlatform] }
+                else return false;
+            } else return false;
+        }
+    }
 
     hop(origin, destination) {
         // 출발지와 도착지로 선택한 플랫폼이 위아래로 2칸 차이, 또는 수평으로 4칸 차이일 때만
-        if ((Math.abs(origin.y - destination.y) === 2 && Math.abs(origin.x - destination.x) === 2)
-        || (Math.abs(origin.y - destination.y) === 0 && Math.abs(origin.x - destination.x) === 4)
-        || (Math.abs(origin.y - destination.y) === 4 && Math.abs(origin.x - destination.x) === 0)) {
-            const middlePlatform = this.platforms[(origin.y + destination.y) / 2][(origin.x + destination.x) / 2];
-            // 두 플랫폼 사이에 있는 플랫폼
-            console.log("lets hop");
-            // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
-            if (middlePlatform.frog) {
-                console.log("hop!");
-    
-                // 개구리 이동 애니메이션
-                const startPosition = origin.frog.model.position.clone();
-                const endPosition = destination.model.position.clone();
-                animateMove(startPosition, endPosition, origin.frog);
-    
-                // 출발지와 도착지 개구리 처리
-                
-                destination.frog = origin.frog;
-                origin.frog = null;
-                
-                const jumpsound = new Audio('../assets/jumpsound.mp3');
-                const jumpsound2 = new Audio('../assets/jumpsound.mp3');
+        const middlePlatforms = this.isAbleToHop(origin, destination);
+        // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
+        if (middlePlatforms) {
+            console.log("hop!");
 
-                // 사운드 재생
-                jumpsound.play();
-  
-                setTimeout(() => {
-                  // 0.5초 후에 실행할 코드
-                  jumpsound2.play();
-                }, 360); // 500ms = 0.5초
+            // 개구리 이동 애니메이션
+            const startPosition = origin.frog.model.position.clone();
+            const endPosition = destination.model.position.clone();
+            animateMove(startPosition, endPosition, origin.frog);
 
-                middlePlatform.removeFrog();
+            // 출발지와 도착지 개구리 처리
 
-                this.selectedPlatform = destination;
+            destination.frog = origin.frog;
+            origin.frog = null;
 
-                this.dismissSelection();
+            const jumpsound = new Audio('../assets/jumpsound.mp3');
+            const jumpsound2 = new Audio('../assets/jumpsound.mp3');
 
-                this.getHint(); // 힌트 정보 갱신
+            // 사운드 재생
+            jumpsound.play();
+
+            setTimeout(() => {
+              // 0.5초 후에 실행할 코드
+              jumpsound2.play();
+            }, 360); // 500ms = 0.5초
+
+            for (let p of middlePlatforms) {
+                p.removeFrog();
             }
+
+            this.selectedPlatform = destination;
+
+            this.dismissSelection();
+
+            this.getHint(); // 힌트 정보 갱신
         }
     }
 
@@ -464,8 +495,13 @@ class Board {
             const newRow = []
             for (let j = 0; j < 5; j++) {
                 if (this.platforms[i][j]?.frog) {
-                    console.log(i, j, this.platforms[i][j]);
-                    newRow.push(2);
+                    if(this.platforms[i][j].frog instanceof StoneFrog) {
+                        newRow.push(4);
+                    } else if (this.platforms[i][j].frog instanceof BlueFrog) {
+                        newRow.push(3);
+                    } else {
+                        newRow.push(2);
+                    }
                 } else if (this.platforms[i][j]) {
                     newRow.push(1);
                 } else {
@@ -496,6 +532,7 @@ class Board {
         for (let i = 0; i < 5; i++) {
             const newRow = []
             for (let j = 0; j < 5; j++) {
+                // 일반 개구리일 때
                 if(boardArray[i][j] === 2) {
                     for (let direction of [
                         {x: 1, y: 1},
@@ -509,18 +546,52 @@ class Board {
                     ]) {
                         if (i + direction.y * 2 < 0 || i + direction.y * 2 > 4 ||
                             j + direction.x * 2 < 0 || j + direction.x * 2 > 4) continue;
-                        if (boardArray[i + direction.y][j + direction.x] === 2 &&
-                            boardArray[i + direction.y * 2][j + direction.x * 2] === 1) {
-                            const newBoardArray = deepCopy2DArray(boardArray);
-                            newBoardArray[i][j] = 1;
-                            newBoardArray[i + direction.y][j + direction.x] = 1;
-                            newBoardArray[i + direction.y * 2][j + direction.x * 2] = 2;
-                            if (countOccurrences(newBoardArray, 2) === 1) {
-                                return {x: j, y: i};
-                            } else {
-                                const answer =  Board.simulate(newBoardArray);
-                                if (answer) return {x: j, y: i};
-                            }
+                        const middle1 = boardArray[i + direction.y][j + direction.x];
+                        const destination = boardArray[i + direction.y*2][j + direction.x*2];
+                        if (middle1 <2) continue;
+                        if (destination !== 1) continue;
+
+                        const newBoardArray = deepCopy2DArray(boardArray);
+                        newBoardArray[i][j] = 1;
+                        newBoardArray[i + direction.y][j + direction.x] = 1;
+                        newBoardArray[i + direction.y*2][j + direction.x*2] = 2;
+                        console.log('normal moved:', newBoardArray)
+                        if (countFrogs(newBoardArray) === 1) {
+                            return {x: j, y: i};
+                        } else {
+                            const answer =  Board.simulate(newBoardArray);
+                            if (answer) return {x: j, y: i};
+                        }
+                    }
+                }
+                // 파랑 개구리일 때
+                else if(boardArray[i][j] === 3) {
+                    for (let direction of [
+                        {x: 1, y: 1},
+                        {x: 1, y: -1},
+                        {x: -1, y: -1},
+                        {x: -1, y: 1},
+                    ]) {
+                        if (i + direction.y * 3 < 0 || i + direction.y * 3 > 4 ||
+                            j + direction.x * 3 < 0 || j + direction.x * 3 > 4) continue;
+                        const middle1 = boardArray[i + direction.y][j + direction.x];
+                        const middle2 = boardArray[i + direction.y*2][j + direction.x*2];
+                        const destination = boardArray[i + direction.y*3][j + direction.x*3];
+                        if (middle1 < 2) continue;
+                        if (middle2 < 2) continue;
+                        if (destination !== 1) continue;
+
+                        const newBoardArray = deepCopy2DArray(boardArray);
+                        newBoardArray[i][j] = 1;
+                        newBoardArray[i + direction.y][j + direction.x] = 1;
+                        newBoardArray[i + direction.y*2][j + direction.x*2] = 1;
+                        newBoardArray[i + direction.y*3][j + direction.x*3] = 3;
+                        console.log('blue moved:', newBoardArray)
+                        if (countFrogs(newBoardArray) === 1) {
+                            return {x: j, y: i};
+                        } else {
+                            const answer =  Board.simulate(newBoardArray);
+                            if (answer) return {x: j, y: i};
                         }
                     }
                 }
@@ -879,12 +950,12 @@ function deepCopy2DArray(array) {
     return array.map(row => row.slice());
 }
 
-function countOccurrences(array, target) {
+function countFrogs(array) {
     let count = 0;
 
     for (let row of array) {
         for (let element of row) {
-            if (element === target) {
+            if (element > 1) {
                 count++;
             }
         }
