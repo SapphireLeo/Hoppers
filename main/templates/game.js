@@ -115,7 +115,7 @@ class Game {
 
         document.getElementById("hint-button").onclick = () => {
             console.log('Show Hint.');
-            this.currentLevel.showHint();
+            this.currentLevel.showHint(light, light2);
         }
 
         // 빛 설정
@@ -416,32 +416,32 @@ class Board {
             // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
             if (middlePlatform.frog) {
                 console.log("hop!");
-    
+
                 // 개구리 이동 애니메이션
                 const startPosition = origin.frog.model.position.clone();
                 const endPosition = destination.model.position.clone();
                 animateMove(startPosition, endPosition, origin.frog);
-    
+
                 // 출발지와 도착지 개구리 처리
-                
+
                 destination.frog = origin.frog;
                 origin.frog = null;
-                
+
                 const jumpsound = new Audio('../assets/jumpsound.mp3');
                 const jumpsound2 = new Audio('../assets/jumpsound.mp3');
 
                 // 사운드 재생
                 jumpsound.play();
-  
+
                 setTimeout(() => {
                   // 0.5초 후에 실행할 코드
                   jumpsound2.play();
                 }, 360); // 500ms = 0.5초
 
                 middlePlatform.removeFrog();
-                
+
                 this.selectedPlatform = null;
-  
+
                 destination.frog.model.traverse(child => {
                     if (child.isMesh) {
                       child.material.color.set(0xB4FF80);
@@ -483,7 +483,7 @@ class Board {
             this.hint.x = this.hint.y = null;
         }
     }
-    
+
     // 시뮬레이션을 돌려보고 결과를 제공하는 재귀 함수
     static simulate(boardArray) {
         for (let i = 0; i < 5; i++) {
@@ -522,9 +522,17 @@ class Board {
         return false;
     }
 
-    showHint() {
+    showHint(light, light2) {
         if (this.hint.x === null) return;
         const hintPlatform = this.platforms[this.hint.y][this.hint.x];
+
+        // 현재 조명의 강도를 변수에 저장
+        const originalIntensity1 = light.intensity;
+        const originalIntensity2 = light2.intensity;
+
+        // 빛 강도 낮추기
+        light.intensity *= 0.2;
+        light2.intensity *= 0.2;
 
         // 스포트라이트 생성
         const spotlight = new THREE.SpotLight(0xffff00, 15);
@@ -545,8 +553,12 @@ class Board {
         // 스포트라이트와 타겟을 장면에 추가
         this.scene.add(spotlight);
 
+        // 2초 후에 스포트라이트 제거 및 기존 빛 세기 복원
         setTimeout(() => {
             this.scene.remove(spotlight);
+            // 저장된 원래 강도로 복원
+            light.intensity = originalIntensity1;
+            light2.intensity = originalIntensity2;
         }, 2000);
     }
   }
@@ -563,33 +575,33 @@ class Board {
           }
       });
     }
-  
+
     // frog.model이 그룹이라면 그 그룹 안에서 메시를 찾아야 함
     if (frog.model instanceof THREE.Group) {
       findMeshInGroup(frog.model);
     } else {
       console.log('frog.model은 Group이 아닙니다.');
     }
-  
+
     const duration = 1; // 이동 애니메이션 시간
     let startTime = null;
-  
+
     // 이동 중 개구리가 회전하도록 처리
     function animate(time) {
       if (startTime === null) startTime = time;
       const elapsed = (time - startTime) / 750; // 시간 초 단위로 계산
       const progress = Math.min(elapsed / duration, 1);
-    
+
       // 기본 z축 위치 고정
       const baseZ = startPosition.z;
-    
+
       // 개구리의 위치를 점진적으로 이동
       frog.model.position.lerpVectors(startPosition, endPosition, progress);
-    
+
       // 점프 곡선 생성 (2번 점프하게끔 주기를 2배로 설정하고, Math.abs로 음수 방지)
       const jumpHeight = 1; // 점프 높이 설정
       frog.model.position.z = baseZ + jumpHeight * 1.7 *Math.abs(Math.sin(2 * Math.PI * progress));
-    
+
       // 목표 위치를 향한 방향 계산 (회전할 방향)
       const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize();
       let deg;
@@ -598,10 +610,10 @@ class Board {
       } else {
         deg = (startPosition.y < endPosition.y) ? -2 : -1;
       }
-    
+
       // 개구리의 회전: x, y 방향만 변경하고 z는 고정
       frog.model.rotation.y = deg;
-    
+
       // 애니메이션이 끝났을 때
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -618,28 +630,28 @@ class Board {
     const duration = 0.06; // 'jump' 애니메이션 시간
     const returnDuration = 0.7; // 원래 자세로 돌아오는 애니메이션 시간
     let startTime = null;
-  
+
     // ShapeKey 애니메이션 함수
     function animate(time) {
         if (startTime === null) startTime = time;
         const elapsed = (time - startTime) / 1000; // 시간 초 단위로 계산
-  
+
         // jump 애니메이션 (progress 0 ~ 1)
         const progress = Math.min(elapsed / duration, 1);
         mesh.morphTargetInfluences[mesh.morphTargetDictionary['jump']] = progress;
-  
+
         // 애니메이션이 끝났을 때 (jump 애니메이션 끝난 후)
         if (progress === 1) {
             // 원래 자세로 돌아가는 애니메이션
             const returnStartTime = time;
-  
+
             function returnToOriginalPose(returnTime) {
                 const returnElapsed = (returnTime - returnStartTime) / 1000; // 시간 초 단위로 계산
                 const returnProgress = Math.min(returnElapsed / returnDuration, 1);
-  
+
                 // 'jump'를 0으로 설정하여 원래 자세로 돌아가게 함
                 mesh.morphTargetInfluences[mesh.morphTargetDictionary['jump']] = 1 - returnProgress;
-  
+
                 // 원래 자세로 돌아간 후 애니메이션 종료
                 if (returnProgress < 1) {
                     requestAnimationFrame(returnToOriginalPose);
@@ -647,13 +659,13 @@ class Board {
                     console.log('Returned to original pose.');
                 }
             }
-  
+
             requestAnimationFrame(returnToOriginalPose);
         } else {
             requestAnimationFrame(animate);
         }
     }
-  
+
     // 애니메이션 시작
     requestAnimationFrame(animate);
   }
