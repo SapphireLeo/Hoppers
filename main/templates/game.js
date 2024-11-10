@@ -57,7 +57,40 @@ function changeSceneColor(scene, color) {
     });
 }
 
+const targetPositions = [
+    { position: new THREE.Vector3(0, -4, 6), lookAt: new THREE.Vector3(0, 0.5, 0) }, // front
+    { position: new THREE.Vector3(5.3, 0.4, 6), lookAt: new THREE.Vector3(0.8, 1.3, 0) }, // right
+    { position: new THREE.Vector3(0, 8, 6), lookAt: new THREE.Vector3(0, 3, 0) }, // back
+    { position: new THREE.Vector3(-5.3, 0.4, 6), lookAt: new THREE.Vector3(-0.8, 1.3, 0) }, // left
+    // 다른 방향 위치도 추가 가능
+];
+
+let currentTarget = 0; // 현재 목표 인덱스
+let lerpAlpha = 0;     // 보간 진행도 (0부터 1까지)
+
+// 카메라 전환 함수 (목표 인덱스 설정)
+function changeCameraTarget(targetIndex) {
+    currentTarget = targetIndex;
+    lerpAlpha = 0; // 새로운 전환 시작 시 초기화
+}
+
+// 애니메이션 루프에서 호출할 함수
+function animateCamera(camera) {
+    const target = targetPositions[currentTarget];
+
+    // 카메라 위치와 lookAt을 목표와 보간
+    camera.position.lerp(target.position, 0.05); // 0.05는 이동 속도 (작을수록 천천히)
+
+    // 카메라가 목표 위치를 향하도록 서서히 전환
+    const lookAtCurrent = new THREE.Vector3();
+    camera.getWorldDirection(lookAtCurrent); // 현재 바라보는 방향
+    lookAtCurrent.lerp(target.lookAt.clone().sub(camera.position), 0.05);
+
+    camera.lookAt(camera.position.clone().add(lookAtCurrent));
+}
+
 class Game {
+
     constructor() {
         this.scene = new THREE.Scene();
 
@@ -70,7 +103,10 @@ class Game {
         this.scene.background = sun;
 
         // this.scene.background = new THREE.Color(0xc2d8f5); // 배경색 설정
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+        this.camera.up.set(0, 0, 1);
+        this.cameraIndex = 0;
+
         this.currentLevel = null;
         this.levels = [];
 
@@ -81,6 +117,16 @@ class Game {
         this.gameCanvas = document.getElementById("gameCanvas");
         this.inGameContainer = document.getElementById("in-game-container");
         this.gameClearMessage = document.getElementById("game-clear-container");
+        this.rotateCameraButtonLeft = document.getElementById("camera-left");
+        this.rotateCameraButtonRight = document.getElementById("camera-right");
+        this.rotateCameraButtonLeft.onclick = () => {
+            this.cameraIndex = (this.cameraIndex - 1 + targetPositions.length) % targetPositions.length; // 인덱스를 1 낮추고 배열의 길이로 나머지 연산
+            changeCameraTarget(this.cameraIndex)
+        }
+        this.rotateCameraButtonRight.onclick = () => {
+            this.cameraIndex = (this.cameraIndex + 1) % targetPositions.length; // 인덱스를 1 낮추고 배열의 길이로 나머지 연산
+            changeCameraTarget(this.cameraIndex)
+        }
 
         console.log(all_level_coordinates)
         for (let idx = 0; idx < all_level_coordinates.length; idx++) {
@@ -105,7 +151,6 @@ class Game {
                 console.log("Begin Level ", idx);
                 this.beginLevel(idx);
             }
-
 
             // 그리드 컨테이너에 정사각형 요소 추가
             this.levelSelectContainer.appendChild(square);
@@ -159,10 +204,6 @@ class Game {
 
         const light2 = new THREE.AmbientLight(0xffffff, 1);
         this.scene.add(light2);
-
-        // 카메라 위치 설정
-        this.camera.position.set(0, -2, 6);
-        this.camera.lookAt(new THREE.Vector3(0, 0.5, 0));
 
         this.createBoardGameEdges(); // 보드게임판 테두리 추가
 
@@ -354,6 +395,8 @@ class Game {
 
         // 물결 애니메이션 업데이트
         this.update(); // update 호출
+
+        animateCamera(this.camera);
 
         // 씬 렌더링
         renderer.render(this.scene, this.camera);

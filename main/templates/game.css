@@ -181,7 +181,7 @@ body {
 
 #in-game-container #sun-button{
     position: absolute;
-    top: 190px;  /* 아래쪽에 10px 간격 */
+    top: 30%;  /* 아래쪽에 10px 간격 */
     right: 30px;    /* 왼쪽에 10px 간격 */
 
     width: 6%;
@@ -190,9 +190,29 @@ body {
 
 #in-game-container #moon-button{
     position: absolute;
-    top: 300px;  /* 아래쪽에 10px 간격 */
+    top: 50%;  /* 아래쪽에 10px 간격 */
     right: 30px;    /* 왼쪽에 10px 간격 */
 
     width: 6%;
+    height: auto;
+}
+
+#in-game-container #camera-left{
+    transform: rotate(-45deg);
+    position: absolute;
+    left: 15%;
+    top: 40%;
+
+    width: 10%;
+    height: auto;
+}
+
+#in-game-container #camera-right{
+    transform: rotate(45deg) scaleX(-1); /* -45도 회전 후 좌우 반전 */
+    position: absolute;
+    right: 15%;
+    top: 40%;
+
+    width: 10%;
     height: auto;
 }
