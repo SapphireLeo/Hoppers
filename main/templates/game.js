@@ -17,6 +17,7 @@ const level1_coordinates = [
     { x: 3, y: 3 }
 ];
 const all_level_coordinates = [
+    // easy
     [
         { x: 0, y: 0, type: 'normal' },
         { x: 2, y: 2, type: 'normal' },
@@ -30,17 +31,170 @@ const all_level_coordinates = [
         { x: 2, y: 2, type: 'normal' }
     ],
     [
-        { x: 2, y: 0, type: 'stone' },
-        { x: 1, y: 1, type: 'stone' },
-        { x: 3, y: 1, type: 'stone' },
-        { x: 2, y: 2, type: 'normal' }
+        { x: 0, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
     ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+    ],
+    // easy special
     [
         { x: 0, y: 0, type: 'blue' },
         { x: 1, y: 1, type: 'stone' },
         { x: 2, y: 2, type: 'stone' },
         { x: 0, y: 2, type: 'normal' },
         { x: 1, y: 3, type: 'stone' }
+    ],
+
+    // medium
+    [
+        { x: 1, y: 1, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 0, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 0, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+    ],
+    // medium special
+    [
+        { x: 0, y: 0, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 2, y: 0, type: 'stone' },
+        { x: 2, y: 2, type: 'stone' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+    ],
+
+    // hard
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+        { x: 4, y: 2, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 0, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 4, y: 2, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+    ],
+    // hard special
+    [
+        { x: 0, y: 4, type: 'blue' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+    ],
+
+    // super hard
+    [
+        { x: 1, y: 3, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 1, y: 1, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 4, y: 2, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 4, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 3, y: 3, type: 'normal' },
+        { x: 0, y: 2, type: 'normal' },
+        { x: 4, y: 2, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+    ],
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'normal' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 3, y: 1, type: 'normal' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
+    ],
+    // super hard special
+    [
+        { x: 0, y: 4, type: 'normal' },
+        { x: 2, y: 4, type: 'normal' },
+        { x: 1, y: 3, type: 'stone' },
+        { x: 2, y: 2, type: 'normal' },
+        { x: 3, y: 1, type: 'stone' },
+        { x: 2, y: 0, type: 'normal' },
+        { x: 4, y: 0, type: 'normal' },
     ],
 ]
 
@@ -104,6 +258,7 @@ class Game {
 
         this.currentLevel = null;
         this.levels = [];
+        this.lights = [];
 
         this.pond = this.createPond();
 
@@ -139,7 +294,7 @@ class Game {
 
             const levelNumber = document.createElement("div");
             levelNumber.classList.add("level-number");
-            levelNumber.innerText = "" + idx; // 각 정사각형에 번호 표시
+            levelNumber.innerText = "" + (idx + 1); // 각 정사각형에 번호 표시
             square.appendChild(levelNumber);
 
             icon.onclick = () => {
@@ -155,6 +310,7 @@ class Game {
         document.getElementById("start-button").onclick = () => {
             console.log('To Level Selection.');
             this.toLevelSelection()
+            document.getElementById('background-music').play();
         }
 
         // 재시작 버튼 클릭 시 재시작
@@ -179,7 +335,7 @@ class Game {
 
         document.getElementById("hint-button").onclick = () => {
             console.log('Show Hint.');
-            this.currentLevel.showHint(light, light2);
+            this.currentLevel.showHint(this.lights);
         }
 
         document.getElementById("sun-button").onclick = () => {
@@ -227,6 +383,8 @@ class Game {
         yellowLight4.position.set(0, -2.5, 1);
 
         this.createBoardGameEdges(); // 보드게임판 테두리 추가
+
+        this.lights.push(ambientLight, sunlight, moonlight, yellowLight1, yellowLight2, yellowLight3, yellowLight4)
 
         controls = new OrbitControls(this.camera, renderer.domElement);
 
@@ -534,8 +692,14 @@ class Board {
         if (origin.frog instanceof StoneFrog) return false;
         else if (origin.frog instanceof BlueFrog) {
             if (Math.abs(origin.y - destination.y) === 3 && Math.abs(origin.x - destination.x) === 3) {
-                const middlePlatform1 = this.platforms[(origin.y + destination.y)/2-0.5][(origin.x + destination.x)/2-0.5]
-                const middlePlatform2 = this.platforms[(origin.y + destination.y)/2+0.5][(origin.x + destination.x)/2+0.5]
+                let middlePlatform1, middlePlatform2;
+                if ((origin.y - destination.y) * (origin.x - destination.x) > 0) {
+                    middlePlatform1 = this.platforms[(origin.y + destination.y)/2-0.5][(origin.x + destination.x)/2-0.5]
+                    middlePlatform2 = this.platforms[(origin.y + destination.y)/2+0.5][(origin.x + destination.x)/2+0.5]
+                } else {
+                    middlePlatform1 = this.platforms[(origin.y + destination.y)/2-0.5][(origin.x + destination.x)/2+0.5]
+                    middlePlatform2 = this.platforms[(origin.y + destination.y)/2+0.5][(origin.x + destination.x)/2-0.5]
+                }
                 if (middlePlatform1.frog && middlePlatform2.frog) { return [middlePlatform1, middlePlatform2]}
                 else return false;
             } else return false;
@@ -554,6 +718,7 @@ class Board {
     hop(origin, destination) {
         // 출발지와 도착지로 선택한 플랫폼이 위아래로 2칸 차이, 또는 수평으로 4칸 차이일 때만
         const middlePlatforms = this.isAbleToHop(origin, destination);
+        console.log("middle platforms:", middlePlatforms)
         // 사이에 있는 플랫폼에도 개구리가 있을 경우에만 뛰어넘기 수행
         if (middlePlatforms) {
             console.log("hop!");
@@ -657,7 +822,6 @@ class Board {
                         newBoardArray[i][j] = 1;
                         newBoardArray[i + direction.y][j + direction.x] = 1;
                         newBoardArray[i + direction.y*2][j + direction.x*2] = 2;
-                        console.log('normal moved:', newBoardArray)
                         if (countFrogs(newBoardArray) === 1) {
                             return {x: j, y: i};
                         } else {
@@ -688,7 +852,6 @@ class Board {
                         newBoardArray[i + direction.y][j + direction.x] = 1;
                         newBoardArray[i + direction.y*2][j + direction.x*2] = 1;
                         newBoardArray[i + direction.y*3][j + direction.x*3] = 3;
-                        console.log('blue moved:', newBoardArray)
                         if (countFrogs(newBoardArray) === 1) {
                             return {x: j, y: i};
                         } else {
@@ -702,17 +865,9 @@ class Board {
         return false;
     }
 
-    showHint(light, light2) {
+    showHint() {
         if (this.hint.x === null) return;
         const hintPlatform = this.platforms[this.hint.y][this.hint.x];
-
-        // 현재 조명의 강도를 변수에 저장
-        const originalIntensity1 = light.intensity;
-        const originalIntensity2 = light2.intensity;
-
-        // 빛 강도 낮추기
-        light.intensity *= 0.2;
-        light2.intensity *= 0.2;
 
         // 스포트라이트 생성
         const spotlight = new THREE.SpotLight(0xffff00, 15);
@@ -733,13 +888,17 @@ class Board {
         // 스포트라이트와 타겟을 장면에 추가
         this.scene.add(spotlight);
 
-        // 2초 후에 스포트라이트 제거 및 기존 빛 세기 복원
-        setTimeout(() => {
-            this.scene.remove(spotlight);
-            // 저장된 원래 강도로 복원
-            light.intensity = originalIntensity1;
-            light2.intensity = originalIntensity2;
-        }, 2000);
+        // 빛 강도 낮추기
+        for (let light of this.game.lights) {
+            light.intensity *= 0.2;
+
+            // 2초 후에 스포트라이트 제거 및 기존 빛 세기 복원
+            setTimeout(() => {
+                this.scene.remove(spotlight);
+                // 저장된 원래 강도로 복원
+                light.intensity /= 0.2;
+            }, 2000);
+        }
     }
   }
 
@@ -786,9 +945,16 @@ function animateMove(startPosition, endPosition, frog) {
         const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize();
         let deg;
         if (startPosition.x < endPosition.x) {
-            deg = (startPosition.y < endPosition.y) ? 2 : 1;
+            if (startPosition.y < endPosition.y) deg = 2;
+            else if (startPosition.y > endPosition.y) deg = 1;
+            else deg = 1.5;
+        } else if (startPosition.x > endPosition.x) {
+            if (startPosition.y < endPosition.y) deg = -2;
+            else if (startPosition.y > endPosition.y) deg = -1;
+            else deg = -1.5;
         } else {
-            deg = (startPosition.y < endPosition.y) ? -2 : -1;
+            if (startPosition.y < endPosition.y) deg = 3;
+            else if (startPosition.y > endPosition.y) deg = 0;
         }
 
         // 개구리의 회전: x, y 방향만 변경하고 z는 고정
@@ -929,6 +1095,7 @@ class Platform {
     }
 
     removeFrog() {
+        console.log("Frog is removed from:", this);
         this.board.scene.remove(this.frog.model);
         this.frog = null;
     }
