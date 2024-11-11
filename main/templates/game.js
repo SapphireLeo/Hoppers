@@ -189,6 +189,9 @@ class Game {
             this.scene.remove(yellowLight2);
             this.scene.remove(yellowLight3);
             this.scene.remove(yellowLight4);
+            this.scene.remove(moonlight);
+            this.scene.add(sunlight);
+            this.scene.add(ambientLight);
         }
 
         document.getElementById("moon-button").onclick = () => {
@@ -198,15 +201,20 @@ class Game {
             this.scene.add(yellowLight2);
             this.scene.add(yellowLight3);
             this.scene.add(yellowLight4);
+            this.scene.add(moonlight);
+            this.scene.remove(sunlight);
+            this.scene.remove(ambientLight);
         }
 
-        // 빛 설정
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(1, 1, 1).normalize();
-        this.scene.add(light);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        this.scene.add(ambientLight);
 
-        const light2 = new THREE.AmbientLight(0xffffff, 1);
-        this.scene.add(light2);
+        const sunlight = new THREE.DirectionalLight(0xffffff, 3);
+        sunlight.position.set(5, 2, 10);
+        this.scene.add(sunlight);
+
+        const moonlight = new THREE.DirectionalLight(0xffffff, 0.8);
+        moonlight.position.set(-1, -5, 10);
 
         // 강한 노란색 광원 추가
         const yellowLight1 = new THREE.PointLight(0xffff00, 2, 10);
