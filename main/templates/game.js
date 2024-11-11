@@ -690,6 +690,7 @@ class Board {
     // Hop가 가능한지 살피고 가능하다면 중간에 있는 플랫폼들을 배열로 묶어서 리턴
     isAbleToHop(origin, destination) {
         if (origin.frog instanceof StoneFrog) return false;
+        if (destination.frog) return false;
         else if (origin.frog instanceof BlueFrog) {
             if (Math.abs(origin.y - destination.y) === 3 && Math.abs(origin.x - destination.x) === 3) {
                 let middlePlatform1, middlePlatform2;
